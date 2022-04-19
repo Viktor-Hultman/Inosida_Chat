@@ -1,10 +1,31 @@
 <script>
-	export let name;
+	import SignIn from "./SignIn.svelte";
+	import Chat from "./Chat.svelte";
+	import SignOut from "./SignOut.svelte";
+	import db from './db.js';
+	import { supabase, loadChannels } from "./db.js";
+
+	
+	let user = db.user
+
+	// user.set(supabase.auth.user())
+    // 	supabase.auth.onAuthStateChange(( _, session) => {
+    //     	user.set(session?.user);
+    // 	});
+
+	console.log(user)
+
+	
+
 </script>
 
 <main>
-	<h1>Hello {name}!</h1>
-	<p>Visit the <a href="https://svelte.dev/tutorial">Svelte tutorial</a> to learn how to build Svelte apps.</p>
+	{#if $user}
+		<Chat />
+		<SignOut />
+	{:else}
+		<SignIn />
+	{/if}
 </main>
 
 <style>
