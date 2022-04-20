@@ -8,11 +8,6 @@
 	
 	let user = db.user
 
-	// user.set(supabase.auth.user())
-    // 	supabase.auth.onAuthStateChange(( _, session) => {
-    //     	user.set(session?.user);
-    // 	});
-
 	console.log(user)
 
 	
