@@ -10,8 +10,6 @@
 
 	console.log(user)
 
-	
-
 </script>
 
 <main>
