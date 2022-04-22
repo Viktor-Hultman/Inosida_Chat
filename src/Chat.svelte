@@ -16,6 +16,8 @@ import { afterUpdate } from 'svelte';
         addMessage,
         deleteMessage,
         deleteChannel,
+        updateMessage,
+        updateChannel,
     } from "./db.js";
 
     let currentUser
@@ -25,8 +27,6 @@ import { afterUpdate } from 'svelte';
 
     loadChannels()
     getAllUsers()
-
-	console.log(currentUser)
 
 
     const slugify = (text) => {
@@ -54,6 +54,20 @@ import { afterUpdate } from 'svelte';
         }
     }
 
+    const updateAMessage = async (message, message_id, message_user_id, user_id) => {
+        const newMessage = prompt("Update your previous message", message)
+        if (newMessage) {
+            updateMessage(newMessage, message_id, message_user_id, user_id)
+        }
+    }
+
+    const updateAChannel = async (channel_name, channel_id, channel_user_id, user_id) => {
+        const newName = prompt("Update this channels name", channel_name)
+        if (newName) {
+            updateChannel(slugify(newName), channel_id, channel_user_id, user_id)
+        }
+    }
+
 //   addMessage("Hello again", "12", "b41cd2eb-1894-48c9-abca-fcd7746d030e", "Viktor Hultman", "https://lh3.googleusercontent.com/a-/AOh14GjCZtxbARCjhP1GSgqPv8ZiufZygj-s1c5BrYgb4w=s96-c")
     let messageInputVal = '';
 
@@ -74,6 +88,11 @@ import { afterUpdate } from 'svelte';
 
     afterUpdate(() => {messageContainer && messageContainer.scrollTo({top: messageContainer.scrollHeight, left: 0, behavior: 'smooth'})});
 
+    const getDate = (db_date) => {
+        let msgDate = db_date.slice(0, 10)
+        return msgDate
+    }
+
 
 </script>
 
@@ -91,6 +110,7 @@ import { afterUpdate } from 'svelte';
                 Add User
             </button>
             {#if channel.created_by == currentUser.id}
+                <button on:click={() => updateAChannel(channel.channel_name, channel.id, channel.created_by, currentUser.id)}>Update</button>
                 <button on:click={() => deleteChannel(channel.id, channel.created_by, currentUser.id)}>Delete</button>
             {/if}
         </div>
@@ -114,10 +134,14 @@ import { afterUpdate } from 'svelte';
         <h3>Messages:</h3>
         <div class="message-container" bind:this={messageContainer}>
             {#each $channelMessages as message (message.id)}
-                <span><span><img src="{message.user_id.userdata.avatar_url}" alt="profile" width="40px"></span> <span>{message.user_id.userdata.name}</span></span>
+                <span><img src="{message.user_id.userdata.avatar_url}" alt="profile" width="40px"></span> <span>{message.user_id.userdata.name}</span><span>{getDate(message.inserted_at)}</span>
                 <br>
                 <span>{message.message}</span>
+                {#if message.edited}
+                    <span>(edited)</span>
+                {/if}
                 {#if message.user_id.id == currentUser.id}
+                    <button on:click={() => updateAMessage(message.message, message.id, message.user_id.id, currentUser.id)}>Update</button>
                     <button on:click={() => deleteMessage(message.id, message.user_id.id, currentUser.id)}>Delete</button>
                 {/if}
                 <br>

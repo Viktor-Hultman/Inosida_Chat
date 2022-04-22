@@ -8,7 +8,6 @@
 	
 	let user = db.user
 
-	console.log(user)
 
 </script>
 

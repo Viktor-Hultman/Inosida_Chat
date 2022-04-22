@@ -14,17 +14,36 @@ export const allUsers = writable([])
 export const currentChannel = writable(false)
 export const channelMessages = writable([])
 
-export let localCurrentChannel
 
+// export let localChannels
+// channels.subscribe((channels) => {
+//   localChannels = channels
+//   console.log(localChannels)
+// })
+
+export let localChannels
+channels.subscribe((channels) => {
+  localChannels = channels
+  console.log(localChannels)
+})
+
+export let localCurrentChannel
 currentChannel.subscribe((channel) => {
   localCurrentChannel = channel
 })
 
 //Subscribtion to always update the chanelMessages with new values
-const messages = supabase.from('messages')
+const userMessages = supabase.from('messages')
 //Updating the channelMessages with the new message
-.on('INSERT', async (payload) => {
+.on('INSERT', async payload => {
   if(localCurrentChannel.id == payload.new.channel_id){
+    let { data, error } = await supabase.from('messages').select(`*, user_id (userdata, id)`).match({id: payload.new.id}).single()
+    channelMessages.update(messages => [...messages, data])
+  }
+})
+.on('UPDATE', async payload => {
+  if(localCurrentChannel.id == payload.new.channel_id){
+    channelMessages.update((messages) => messages.filter((message) => message.id !== payload.old.id))
     let { data, error } = await supabase.from('messages').select(`*, user_id (userdata, id)`).match({id: payload.new.id}).single()
     channelMessages.update(messages => [...messages, data])
   }
@@ -32,6 +51,31 @@ const messages = supabase.from('messages')
 .on('DELETE', payload => channelMessages.update((messages) => messages.filter((message) => message.id !== payload.old.id)))
 .subscribe()
 
+const userChannels = supabase.from('channels')
+.on('UPDATE', async payload => {
+  localChannels.every( async channel => {
+    if (channel.id == payload.old.id && (channel.created_by == supabase.auth.currentUser.id || channel.allowed_users.includes(supabase.auth.currentUser.id))) {
+      channels.update((channels) => channels.filter((channel) => channel.id !== payload.old.id))
+      let { data, error } = await supabase.from('channels').select('*').match({id: payload.new.id}).single()
+      channels.update(channels => [...channels, data])
+      return false;
+    }
+    return true;
+  })
+  console.log(payload);
+})
+.on('DELETE', payload => channels.update((channels) => channels.filter((channel) => channel.id !== payload.old.id)))
+.subscribe()
+
+
+export const addMessage = async (message, channel_id, user_id) => {
+  const { data, error } = await supabase.from('messages').insert([{ message: message, channel_id: channel_id, user_id: user_id},
+  ])
+
+  if(error){
+    return console.error(error);
+  }
+}
 
 export const deleteMessage = async (message_id, message_user_id, user_id) => {
   if (message_user_id != user_id){
@@ -40,6 +84,30 @@ export const deleteMessage = async (message_id, message_user_id, user_id) => {
 
   const { data, error } = await supabase.from('messages').delete().match({id: message_id})
   
+  if(error){
+    return console.error(error);
+  }
+}
+
+export const updateMessage = async (message, message_id, message_user_id, user_id) => {
+  if (message_user_id != user_id){
+    return 
+  }
+
+  const { data, error } = await supabase.from('messages').update([{ message: message, edited: true }]).match({id: message_id})
+
+  if(error){
+    return console.error(error);
+  }
+}
+
+export const updateChannel = async (channel_name, channel_id, channel_user_id, user_id) => {
+  if (channel_user_id != user_id){
+    return 
+  }
+
+  const { data, error } = await supabase.from('channels').update({ channel_name: channel_name}).match({id: channel_id})
+
   if(error){
     return console.error(error);
   }
@@ -92,16 +160,6 @@ export const createChannel = async (name, user_id) => {
   loadChannels()
 }
 
-export const addMessage = async (message, channel_id, user_id) => {
-  const { data, error } = await supabase.from('messages').insert([{ message: message, channel_id: channel_id, user_id: user_id},
-  ])
-
-  if(error){
-    return console.error(error);
-  }
-
-}
-
 export const getChannelToAddUser = async (channel_id, user_id) => {
   const { data, error } = await supabase.from('channels').select('allowed_users').match({id: channel_id})
 
@@ -146,7 +204,6 @@ export const getMessagesOfChannel = async (channel_id) => {
   }
   channelMessages.set(data)
 }
-
 
 loadChannels();
 
