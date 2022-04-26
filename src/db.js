@@ -15,16 +15,26 @@ export const currentChannel = writable(false)
 export const channelMessages = writable([])
 
 
-// export let localChannels
-// channels.subscribe((channels) => {
-//   localChannels = channels
-//   console.log(localChannels)
-// })
+export let currentChannelMessages
+channelMessages.subscribe((messages) => {
+  currentChannelMessages = messages
+  if(currentChannelMessages.length > 0){
+    currentChannelMessages.sort(function (a, b) {
+      return a.id - b.id;
+    });
+    console.log(currentChannelMessages)
+  }
+})
 
 export let localChannels
 channels.subscribe((channels) => {
   localChannels = channels
-  console.log(localChannels)
+  if(localChannels.length > 0){
+    localChannels.sort(function (a, b) {
+      return a.id - b.id;
+    });
+    console.log(localChannels)
+  }
 })
 
 export let localCurrentChannel
@@ -43,8 +53,8 @@ const userMessages = supabase.from('messages')
 })
 .on('UPDATE', async payload => {
   if(localCurrentChannel.id == payload.new.channel_id){
-    channelMessages.update((messages) => messages.filter((message) => message.id !== payload.old.id))
     let { data, error } = await supabase.from('messages').select(`*, user_id (userdata, id)`).match({id: payload.new.id}).single()
+    channelMessages.update((messages) => messages.filter((message) => message.id !== payload.old.id))
     channelMessages.update(messages => [...messages, data])
   }
 })
@@ -55,8 +65,8 @@ const userChannels = supabase.from('channels')
 .on('UPDATE', async payload => {
   localChannels.every( async channel => {
     if (channel.id == payload.old.id && (channel.created_by == supabase.auth.currentUser.id || channel.allowed_users.includes(supabase.auth.currentUser.id))) {
-      channels.update((channels) => channels.filter((channel) => channel.id !== payload.old.id))
       let { data, error } = await supabase.from('channels').select('*').match({id: payload.new.id}).single()
+      channels.update((channels) => channels.filter((channel) => channel.id !== payload.old.id))
       channels.update(channels => [...channels, data])
       return false;
     }

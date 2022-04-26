@@ -83,10 +83,17 @@ import { afterUpdate } from 'svelte';
 
     let messageContainer
 
-    $:console.log($channelMessages);
+    $: if($channelMessages) {
+        console.log($channelMessages);
+    }
+
     $:console.log($currentChannel);
 
-    afterUpdate(() => {messageContainer && messageContainer.scrollTo({top: messageContainer.scrollHeight, left: 0, behavior: 'smooth'})});
+
+
+    afterUpdate(() => {
+        messageContainer && messageContainer.scrollTo({top: messageContainer.scrollHeight, left: 0, behavior: 'smooth'})
+    });
 
     const getDate = (db_date) => {
         let msgDate = db_date.slice(0, 10)
@@ -102,9 +109,9 @@ import { afterUpdate } from 'svelte';
     <h2>Hello {currentUser.user_metadata.full_name}!</h2>
     <h2>All you channels</h2>
     {#each $channels as channel (channel.id)}
-        <div class="channel" on:click={() => openChannel(channel.id)}>
-            <h3>{channel.channel_name}</h3>
-            <h3>Users in this chat:</h3>
+        <div class="channel">
+            <h3 on:click={() => openChannel(channel.id)}>{channel.channel_name}</h3>
+            <h4>Users in this chat:</h4>
             <p>{channel.allowed_users}</p>
             <button on:click={() => addAUserToChannel(channel.id)}>
                 Add User
@@ -167,7 +174,7 @@ import { afterUpdate } from 'svelte';
         margin-bottom: 10px;
     }
 
-    .channel:hover {
+    .channel h3:hover {
         cursor: pointer;
     }
 
