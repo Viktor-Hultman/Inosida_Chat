@@ -13,6 +13,7 @@ export const channels = writable([])
 export const allUsers = writable([])
 export const currentChannel = writable(false)
 export const channelMessages = writable([])
+export const scrollTheChat = writable(false)
 
 
 export let currentChannelMessages
@@ -22,7 +23,6 @@ channelMessages.subscribe((messages) => {
     currentChannelMessages.sort(function (a, b) {
       return a.id - b.id;
     });
-    console.log(currentChannelMessages)
   }
 })
 
@@ -33,7 +33,6 @@ channels.subscribe((channels) => {
     localChannels.sort(function (a, b) {
       return a.id - b.id;
     });
-    console.log(localChannels)
   }
 })
 
@@ -42,23 +41,29 @@ currentChannel.subscribe((channel) => {
   localCurrentChannel = channel
 })
 
+
 //Subscribtion to always update the chanelMessages with new values
 const userMessages = supabase.from('messages')
 //Updating the channelMessages with the new message
 .on('INSERT', async payload => {
   if(localCurrentChannel.id == payload.new.channel_id){
+    scrollTheChat.set(true)
     let { data, error } = await supabase.from('messages').select(`*, user_id (userdata, id)`).match({id: payload.new.id}).single()
     channelMessages.update(messages => [...messages, data])
   }
 })
 .on('UPDATE', async payload => {
   if(localCurrentChannel.id == payload.new.channel_id){
+    scrollTheChat.set(false)
     let { data, error } = await supabase.from('messages').select(`*, user_id (userdata, id)`).match({id: payload.new.id}).single()
     channelMessages.update((messages) => messages.filter((message) => message.id !== payload.old.id))
     channelMessages.update(messages => [...messages, data])
   }
 })
-.on('DELETE', payload => channelMessages.update((messages) => messages.filter((message) => message.id !== payload.old.id)))
+.on('DELETE', payload => {
+  scrollTheChat.set(false)
+  channelMessages.update((messages) => messages.filter((message) => message.id !== payload.old.id))
+})
 .subscribe()
 
 const userChannels = supabase.from('channels')
@@ -111,7 +116,7 @@ export const updateMessage = async (message, message_id, message_user_id, user_i
   }
 }
 
-export const updateChannel = async (channel_name, channel_id, channel_user_id, user_id) => {
+export const updateChannelName = async (channel_name, channel_id, channel_user_id, user_id) => {
   if (channel_user_id != user_id){
     return 
   }
@@ -196,6 +201,35 @@ export const addUserToChannel = async (channel_id, user_id, allowedUsers) => {
   loadChannels()
 }
 
+export const getChannelToRemoveUser = async (channel_id, user_id) => {
+  const { data, error } = await supabase.from('channels').select('allowed_users').match({id: channel_id})
+
+  if(error){
+    return console.error(error);
+  }
+  let allowedUsers = data[0].allowed_users ? data[0].allowed_users : []
+  removeUserFromChannel(channel_id, user_id, allowedUsers)
+}
+
+export const removeUserFromChannel = async (channel_id, user_id, allowedUsers) => {
+  let filteredUsers = []
+  if (allowedUsers.includes(user_id)) {
+    for (let i = 0; i < allowedUsers.length; i++) {
+      if(allowedUsers[i] != user_id){
+        filteredUsers.push(allowedUsers[i])
+      }
+    }
+  } else {
+    return console.log("That user is not currently in this chat");
+  }
+  const { data, error } = await supabase.from('channels').update({allowed_users: filteredUsers}).match({id: channel_id})
+  
+  if(error){
+    return console.error(error);
+  }
+  loadChannels()
+}
+
 export const openChannel = async (channel_id) => {
   const { data, error } = await supabase.from('channels').select('*').match({id: channel_id}).single()
 
@@ -204,6 +238,7 @@ export const openChannel = async (channel_id) => {
   }
   currentChannel.set(data)
   getMessagesOfChannel(channel_id)
+  scrollTheChat.set(true)
 }
 
 export const getMessagesOfChannel = async (channel_id) => {

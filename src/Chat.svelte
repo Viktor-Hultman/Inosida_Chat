@@ -10,6 +10,7 @@ import { afterUpdate } from 'svelte';
         allUsers, 
         createChannel, 
         getChannelToAddUser,
+        getChannelToRemoveUser,
         currentChannel,
         openChannel,
         channelMessages,
@@ -17,7 +18,8 @@ import { afterUpdate } from 'svelte';
         deleteMessage,
         deleteChannel,
         updateMessage,
-        updateChannel,
+        updateChannelName,
+        scrollTheChat,
     } from "./db.js";
 
     let currentUser
@@ -29,28 +31,36 @@ import { afterUpdate } from 'svelte';
     getAllUsers()
 
 
-    const slugify = (text) => {
+    const trimChannelName = (text) => {
         return text
         .toString()
-        .toLowerCase()
-        .replace(/\s+/g, '-') // Replace spaces with -
-        .replace(/[^\w-]+/g, '') // Remove all non-word chars
+        .trim()
+        // .toLowerCase()
+        // .replace(/\s+/g, '-') // Replace spaces with -
+        // .replace(/[^\w-]+/g, '') // Remove all non-word chars
         .replace(/--+/g, '-') // Replace multiple - with single -
-        .replace(/^-+/, '') // Trim - from start of text
-        .replace(/-+$/, '') // Trim - from end of text
+        // .replace(/^-+/, '') // Trim - from start of text
+        // .replace(/-+$/, '') // Trim - from end of text
     }
 
     const createNewChannel = async () => {
         const name = prompt('Please enter the channel name')
         if (name) {
-        createChannel(slugify(name), currentUser.id)
+        createChannel(trimChannelName(name), currentUser.id)
         }
     }
 
     const addAUserToChannel = async (channel_id) => {
-        const user_id = prompt('Please enter the id')
+        const user_id = prompt('Please enter the id of the person you want to add')
         if (user_id) {
             getChannelToAddUser(channel_id, user_id)
+        }
+    }
+
+    const removeAUserfromChannel = async (channel_id) => {
+        const user_id = prompt('Please enter the id of the person you want to remove')
+        if (user_id) {
+            getChannelToRemoveUser(channel_id, user_id)
         }
     }
 
@@ -61,14 +71,18 @@ import { afterUpdate } from 'svelte';
         }
     }
 
-    const updateAChannel = async (channel_name, channel_id, channel_user_id, user_id) => {
+    const updateAChannelName = async (channel_name, channel_id, channel_user_id, user_id) => {
         const newName = prompt("Update this channels name", channel_name)
         if (newName) {
-            updateChannel(slugify(newName), channel_id, channel_user_id, user_id)
+            updateChannelName(slugify(newName), channel_id, channel_user_id, user_id)
         }
     }
 
-//   addMessage("Hello again", "12", "b41cd2eb-1894-48c9-abca-fcd7746d030e", "Viktor Hultman", "https://lh3.googleusercontent.com/a-/AOh14GjCZtxbARCjhP1GSgqPv8ZiufZygj-s1c5BrYgb4w=s96-c")
+    const openAChannel = async (channel_id) => {
+        openChannel(channel_id)
+    }
+    
+
     let messageInputVal = '';
 
     const submitOnEnter = (event, message, channel_id) => {
@@ -83,17 +97,21 @@ import { afterUpdate } from 'svelte';
 
     let messageContainer
 
-    $: if($channelMessages) {
+    
+    $: if($channelMessages) { //Checks for updates, and if channelMessages has changed then run the code
         console.log($channelMessages);
+            if($scrollTheChat) { // Checks if the scrollTheChat writable var is true
+            setTimeout(() => { //Timeout to allow the message to be added before scrolling
+                console.log("Now the chat should scroll");
+                //Scrolling the "message container to the bottom smoothly"
+                messageContainer && messageContainer.scrollTo({top: messageContainer.scrollHeight, left: 0, behavior: 'smooth'})
+            }, 100)
+
+        }
     }
 
     $:console.log($currentChannel);
 
-
-
-    afterUpdate(() => {
-        messageContainer && messageContainer.scrollTo({top: messageContainer.scrollHeight, left: 0, behavior: 'smooth'})
-    });
 
     const getDate = (db_date) => {
         let msgDate = db_date.slice(0, 10)
@@ -110,14 +128,13 @@ import { afterUpdate } from 'svelte';
     <h2>All you channels</h2>
     {#each $channels as channel (channel.id)}
         <div class="channel">
-            <h3 on:click={() => openChannel(channel.id)}>{channel.channel_name}</h3>
+            <h3 on:click={() => openAChannel(channel.id)}>{channel.channel_name}</h3>
             <h4>Users in this chat:</h4>
             <p>{channel.allowed_users}</p>
-            <button on:click={() => addAUserToChannel(channel.id)}>
-                Add User
-            </button>
             {#if channel.created_by == currentUser.id}
-                <button on:click={() => updateAChannel(channel.channel_name, channel.id, channel.created_by, currentUser.id)}>Update</button>
+                <button on:click={() => addAUserToChannel(channel.id)}>Add User</button>
+                <button on:click={() => removeAUserfromChannel(channel.id)}>Remove User</button>
+                <button on:click={() => updateAChannelName(channel.channel_name, channel.id, channel.created_by, currentUser.id)}>Update</button>
                 <button on:click={() => deleteChannel(channel.id, channel.created_by, currentUser.id)}>Delete</button>
             {/if}
         </div>
