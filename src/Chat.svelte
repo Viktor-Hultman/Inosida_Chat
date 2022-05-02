@@ -4,6 +4,7 @@ import { afterUpdate } from 'svelte';
     import db from './db.js';
 	import { 
         supabase, 
+        thisDBUser,
         loadChannels, 
         getAllUsers, 
         channels, 
@@ -20,6 +21,8 @@ import { afterUpdate } from 'svelte';
         updateMessage,
         updateChannelName,
         scrollTheChat,
+        getCurrentDBUser,
+        hideChannel,
     } from "./db.js";
 
     let currentUser
@@ -74,26 +77,48 @@ import { afterUpdate } from 'svelte';
     const updateAChannelName = async (channel_name, channel_id, channel_user_id, user_id) => {
         const newName = prompt("Update this channels name", channel_name)
         if (newName) {
-            updateChannelName(slugify(newName), channel_id, channel_user_id, user_id)
+            updateChannelName(trimChannelName(newName), channel_id, channel_user_id, user_id)
         }
     }
 
     const openAChannel = async (channel_id) => {
         openChannel(channel_id)
     }
-    
 
-    let messageInputVal = '';
-
-    const submitOnEnter = (event, message, channel_id) => {
-        if(!message == ''){
-            // Watch for enter key
-            if (event.keyCode === 13) {
-                addMessage(message, channel_id, currentUser.id)
-                messageInputVal = '';
-            }
+    const hideAChannel = async (channel_id, channel_user_id, user_id, user_hidden_channels) => {
+        const data = hideChannel(channel_id, channel_user_id, user_id, user_hidden_channels) 
+        if (data) {
+            loadChannels()
         }
     }
+
+    const autoResize = (e) => {
+        e.target.style.height = 'auto';
+        e.target.style.height = e.target.scrollHeight + 'px';
+    }
+    
+
+    let messageInputVal = "";
+    const regex = /[^\n]/;
+
+    const submitOnEnter = (event, message, channel_id) => {
+        if(event.shiftKey && event.keyCode === 13){
+            return console.log("Shift and enter is pressed")
+        } else if (event.keyCode === 13 && regex.test(message)) {
+            addMessage(message, channel_id, currentUser.id)
+            messageInputVal = "";
+            event.preventDefault();
+        } else if (event.keyCode === 13){
+            event.preventDefault();
+            return
+        }
+    }
+
+    // if ((event.keyCode == 10 || event.keyCode == 13) && !event.shiftKey){
+    //         console.log("New lines can only be created when holding shift and enter")
+    //         event.preventDefault();
+    //         return
+    // }
 
     let messageContainer
 
@@ -109,24 +134,136 @@ import { afterUpdate } from 'svelte';
 
         }
     }
+    let dbUser = null
 
     $:console.log($currentChannel);
-
+    $: if($thisDBUser) {
+        dbUser = $thisDBUser[0]
+        console.log(dbUser)
+    }
 
     const getDate = (db_date) => {
         let msgDate = db_date.slice(0, 10)
         return msgDate
     }
 
+    function truncateString(str, num) {
+        if (str.length > num) {
+            return str.slice(0, num) + "...";
+        } else {
+            return str;
+        }
+    }
+
+    getCurrentDBUser(currentUser.id)
 
 </script>
 
 
-<div>
-    <img src="{currentUser.user_metadata.avatar_url}" alt="profile" width="40px">
-    <h2>Hello {currentUser.user_metadata.full_name}!</h2>
+<div class="chat-page">
+    <nav class="navbar">
+        <svg xmlns="http://www.w3.org/2000/svg" width="112" height="30" viewBox="0 0 112 30" fill="none">
+            <rect x="0.5" y="27.3667" width="46.9508" height="2.51522" fill="white"/>
+            <g clip-path="url(#clip0_3504_6634)">
+            <path d="M3.50966 6.24644C4.26753 6.24644 4.90482 6.02934 5.42154 5.59513C5.93826 5.16093 6.19662 4.61552 6.19662 3.95891C6.19662 3.30231 5.93826 2.7569 5.42154 2.3227C4.90482 1.88849 4.26753 1.67139 3.50966 1.67139C2.7518 1.67139 2.126 1.89908 1.63224 2.35447C1.13848 2.80986 0.891602 3.34467 0.891602 3.95891C0.891602 4.57316 1.13848 5.10797 1.63224 5.56336C2.126 6.01875 2.7518 6.24644 3.50966 6.24644ZM5.611 24.3878V9.13762H1.47722V24.3878H5.611ZM14.4986 24.3878V16.0637C14.4986 15.5554 14.5675 15.0682 14.7053 14.6023C14.8431 14.1363 15.067 13.7233 15.3771 13.3632C15.6871 13.0031 16.0775 12.7172 16.5483 12.5054C17.0191 12.2936 17.599 12.1877 18.2879 12.1877C18.9999 12.1877 19.5625 12.3412 19.9759 12.6483C20.3893 12.9555 20.6936 13.3367 20.8888 13.7921C21.084 14.2475 21.2046 14.7347 21.2505 15.2536C21.2964 15.7725 21.3194 16.2438 21.3194 16.6674V24.3878H25.4532V14.7611C25.4532 13.9774 25.3498 13.2255 25.1431 12.5054C24.9364 11.7852 24.592 11.1498 24.1097 10.5991C23.6274 10.0484 23.0016 9.6036 22.2323 9.26471C21.4629 8.92581 20.5271 8.75637 19.4247 8.75637C18.0468 8.75637 16.9559 9.03701 16.1522 9.59831C15.3484 10.1596 14.7513 10.8215 14.3608 11.584H14.292V9.13762H10.3649V24.3878H14.4986ZM38.3023 24.7691C39.5425 24.7691 40.7137 24.5784 41.8161 24.1972C42.9184 23.8159 43.8715 23.2758 44.6753 22.5768C45.4791 21.8779 46.1163 21.0359 46.5871 20.051C47.0579 19.0661 47.2933 17.97 47.2933 16.7627C47.2933 15.5554 47.0579 14.4593 46.5871 13.4744C46.1163 12.4895 45.4791 11.6475 44.6753 10.9486C43.8715 10.2496 42.9184 9.70951 41.8161 9.32825C40.7137 8.947 39.5425 8.75637 38.3023 8.75637C37.0622 8.75637 35.891 8.947 34.7886 9.32825C33.6863 9.70951 32.7332 10.2496 31.9294 10.9486C31.1256 11.6475 30.4883 12.4895 30.0176 13.4744C29.5468 14.4593 29.3114 15.5554 29.3114 16.7627C29.3114 17.97 29.5468 19.0661 30.0176 20.051C30.4883 21.0359 31.1256 21.8779 31.9294 22.5768C32.7332 23.2758 33.6863 23.8159 34.7886 24.1972C35.891 24.5784 37.0622 24.7691 38.3023 24.7691ZM38.3023 21.3378C37.5445 21.3378 36.867 21.2107 36.2699 20.9565C35.6728 20.7023 35.1618 20.3635 34.737 19.9398C34.3121 19.5162 33.9906 19.0291 33.7724 18.4784C33.5542 17.9277 33.4451 17.3558 33.4451 16.7627C33.4451 16.1697 33.5542 15.5978 33.7724 15.0471C33.9906 14.4964 34.3121 14.0092 34.737 13.5856C35.1618 13.162 35.6728 12.8231 36.2699 12.5689C36.867 12.3147 37.5445 12.1877 38.3023 12.1877C39.0602 12.1877 39.7377 12.3147 40.3348 12.5689C40.9319 12.8231 41.4429 13.162 41.8677 13.5856C42.2926 14.0092 42.6141 14.4964 42.8323 15.0471C43.0505 15.5978 43.1595 16.1697 43.1595 16.7627C43.1595 17.3558 43.0505 17.9277 42.8323 18.4784C42.6141 19.0291 42.2926 19.5162 41.8677 19.9398C41.4429 20.3635 40.9319 20.7023 40.3348 20.9565C39.7377 21.2107 39.0602 21.3378 38.3023 21.3378Z" fill="white"/>
+            <path d="M56.1117 24.7689C56.9615 24.7689 57.8112 24.6842 58.6609 24.5148C59.5106 24.3453 60.2742 24.07 60.9517 23.6887C61.6292 23.3075 62.1804 22.8044 62.6052 22.1796C63.0301 21.5548 63.2425 20.787 63.2425 19.8762C63.2425 18.8807 63.0243 18.097 62.588 17.5251C62.1516 16.9532 61.6005 16.5031 60.9345 16.1748C60.2685 15.8465 59.5508 15.603 58.7815 15.4441C58.0121 15.2852 57.2945 15.1317 56.6285 14.9834C55.9625 14.8351 55.4113 14.6551 54.9749 14.4433C54.5386 14.2315 54.3204 13.8926 54.3204 13.4266C54.3204 12.8547 54.5845 12.4417 55.1127 12.1875C55.6409 11.9334 56.1806 11.8063 56.7318 11.8063C58.0868 11.8063 59.1661 12.3252 59.9699 13.3631L62.7258 11.0756C62.0598 10.2283 61.1871 9.62996 60.1077 9.28048C59.0283 8.93099 57.9375 8.75625 56.8351 8.75625C56.0084 8.75625 55.1931 8.85157 54.3893 9.04219C53.5855 9.23282 52.8736 9.52935 52.2535 9.93179C51.6335 10.3342 51.134 10.8479 50.755 11.4727C50.3761 12.0975 50.1866 12.8336 50.1866 13.6808C50.1866 14.6551 50.4048 15.4176 50.8412 15.9683C51.2775 16.519 51.8287 16.9479 52.4947 17.2551C53.1607 17.5622 53.8783 17.7846 54.6477 17.9222C55.417 18.0599 56.1347 18.2082 56.8007 18.367C57.4667 18.5259 58.0179 18.7324 58.4542 18.9866C58.8906 19.2408 59.1087 19.6326 59.1087 20.1621C59.1087 20.4587 59.0226 20.7181 58.8504 20.9405C58.6781 21.1629 58.4542 21.3482 58.1786 21.4965C57.903 21.6448 57.6045 21.7507 57.283 21.8142C56.9615 21.8778 56.6514 21.9095 56.3529 21.9095C55.4802 21.9095 54.7395 21.7348 54.131 21.3853C53.5224 21.0358 52.954 20.5857 52.4258 20.035L49.6699 22.4179C50.5196 23.3075 51.4842 23.9217 52.5636 24.2606C53.6429 24.5995 54.8257 24.7689 56.1117 24.7689ZM68.5475 6.24633C69.3054 6.24633 69.9427 6.02922 70.4594 5.59502C70.9761 5.16081 71.2345 4.61541 71.2345 3.9588C71.2345 3.30219 70.9761 2.75679 70.4594 2.32258C69.9427 1.88838 69.3054 1.67127 68.5475 1.67127C67.7897 1.67127 67.1639 1.89897 66.6701 2.35435C66.1763 2.80974 65.9295 3.34456 65.9295 3.9588C65.9295 4.57304 66.1763 5.10786 66.6701 5.56325C67.1639 6.01863 67.7897 6.24633 68.5475 6.24633ZM70.6489 24.3877V9.13751H66.5151V24.3877H70.6489ZM82.7402 24.7689C83.9114 24.7689 85.0023 24.5571 86.0128 24.1335C87.0232 23.7099 87.827 23.0321 88.4241 22.1002H88.493V24.3877H92.4201V0.368652H88.2863V11.0756H88.183C87.9763 10.8214 87.7122 10.5619 87.3907 10.2972C87.0692 10.0324 86.6788 9.78352 86.2194 9.55054C85.7601 9.31755 85.2319 9.12692 84.6348 8.97865C84.0377 8.83039 83.3488 8.75625 82.5679 8.75625C81.3967 8.75625 80.3173 8.96277 79.3298 9.37579C78.3423 9.78882 77.4983 10.3554 76.7979 11.0756C76.0974 11.7957 75.552 12.6429 75.1616 13.6173C74.7712 14.5916 74.576 15.64 74.576 16.7626C74.576 17.8852 74.7597 18.9336 75.1271 19.908C75.4946 20.8823 76.0343 21.7295 76.7462 22.4496C77.4581 23.1698 78.3136 23.7364 79.3126 24.1494C80.3116 24.5624 81.4541 24.7689 82.7402 24.7689ZM83.5669 21.3377C82.8091 21.3377 82.1316 21.2106 81.5345 20.9564C80.9374 20.7022 80.4264 20.3633 80.0016 19.9397C79.5767 19.5161 79.2552 19.0289 79.037 18.4782C78.8188 17.9275 78.7097 17.3557 78.7097 16.7626C78.7097 16.1695 78.8188 15.5977 79.037 15.047C79.2552 14.4963 79.5767 14.0091 80.0016 13.5855C80.4264 13.1619 80.9374 12.823 81.5345 12.5688C82.1316 12.3146 82.8091 12.1875 83.5669 12.1875C84.3248 12.1875 85.0023 12.3146 85.5994 12.5688C86.1965 12.823 86.7075 13.1619 87.1323 13.5855C87.5572 14.0091 87.8787 14.4963 88.0969 15.047C88.3151 15.5977 88.4241 16.1695 88.4241 16.7626C88.4241 17.3557 88.3151 17.9275 88.0969 18.4782C87.8787 19.0289 87.5572 19.5161 87.1323 19.9397C86.7075 20.3633 86.1965 20.7022 85.5994 20.9564C85.0023 21.2106 84.3248 21.3377 83.5669 21.3377ZM102.031 24.7689C103.134 24.7689 104.144 24.573 105.063 24.1812C105.981 23.7893 106.739 23.1592 107.336 22.2908H107.44V24.3877H111.16V15.6188C111.16 15.2588 111.148 14.8404 111.125 14.3639C111.103 13.8873 111.028 13.3949 110.902 12.8865C110.775 12.3782 110.569 11.8751 110.282 11.3774C109.994 10.8796 109.587 10.4401 109.059 10.0589C108.53 9.67762 107.864 9.3652 107.061 9.12162C106.257 8.87804 105.269 8.75625 104.098 8.75625C102.789 8.75625 101.52 8.94688 100.292 9.32814C99.0629 9.70939 97.9893 10.3342 97.0706 11.2026L99.2409 13.2042C99.792 12.7171 100.447 12.3305 101.204 12.0446C101.962 11.7586 102.778 11.6157 103.65 11.6157C104.753 11.6157 105.66 11.8539 106.372 12.3305C107.084 12.8071 107.44 13.5219 107.44 14.4751V14.8881H106.406C105.717 14.8881 104.982 14.904 104.201 14.9358C103.421 14.9675 102.645 15.0417 101.876 15.1582C101.107 15.2746 100.366 15.4494 99.6542 15.6824C98.9423 15.9154 98.3165 16.2278 97.7768 16.6196C97.2371 17.0115 96.8065 17.4986 96.485 18.0811C96.1635 18.6636 96.0027 19.3678 96.0027 20.1939C96.0027 20.9564 96.175 21.6236 96.5195 22.1955C96.8639 22.7674 97.3175 23.2439 97.8802 23.6252C98.4428 24.0064 99.0859 24.2924 99.8093 24.483C100.533 24.6736 101.273 24.7689 102.031 24.7689ZM103.03 21.9095C102.686 21.9095 102.341 21.8725 101.997 21.7983C101.652 21.7242 101.342 21.6024 101.067 21.433C100.791 21.2635 100.567 21.057 100.395 20.8134C100.223 20.5699 100.137 20.268 100.137 19.908C100.137 19.3573 100.355 18.9283 100.791 18.6212C101.227 18.3141 101.761 18.0811 102.393 17.9222C103.024 17.7634 103.696 17.6628 104.408 17.6204C105.12 17.5781 105.763 17.5569 106.337 17.5569H107.198V18.4147C107.198 19.4949 106.86 20.3475 106.182 20.9723C105.505 21.5971 104.454 21.9095 103.03 21.9095Z" fill="white"/>
+            </g>
+            <defs>
+            <clipPath id="clip0_3504_6634">
+            <rect width="111" height="25.1522" fill="white" transform="translate(0.5 0.118164)"/>
+            </clipPath>
+            </defs>
+        </svg>
+    </nav>
+    <div class="content">
+        <div class="sidebar">
+            <div class="add-chat-section">
+                <h3>Chattrum</h3>
+                <div class="plus-icon" on:click={createNewChannel}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1600 736v192q0 40-28 68t-68 28h-416v416q0 40-28 68t-68 28h-192q-40 0-68-28t-28-68v-416h-416q-40 0-68-28t-28-68v-192q0-40 28-68t68-28h416v-416q0-40 28-68t68-28h192q40 0 68 28t28 68v416h416q40 0 68 28t28 68z"/></svg>
+                </div>
+            </div>
+            <div class="channels-container">
+                {#if $channels != []}
+                    {#each $channels as channel (channel.id)}
+                        {#if dbUser && (dbUser.hidden_channels == null || !dbUser.hidden_channels.includes(channel.id))}
+                            <div class="channel">
+                                <div class="channel-info" on:click={() => openAChannel(channel.id)}>
+                                    <div class="channel-icon"></div>
+                                    <p>{truncateString(channel.channel_name, 29)}</p>
+                                </div>
+                                <div class="setting-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1152 896q0-106-75-181t-181-75-181 75-75 181 75 181 181 75 181-75 75-181zm512-109v222q0 12-8 23t-20 13l-185 28q-19 54-39 91 35 50 107 138 10 12 10 25t-9 23q-27 37-99 108t-94 71q-12 0-26-9l-138-108q-44 23-91 38-16 136-29 186-7 28-36 28h-222q-14 0-24.5-8.5t-11.5-21.5l-28-184q-49-16-90-37l-141 107q-10 9-25 9-14 0-25-11-126-114-165-168-7-10-7-23 0-12 8-23 15-21 51-66.5t54-70.5q-27-50-41-99l-183-27q-13-2-21-12.5t-8-23.5v-222q0-12 8-23t19-13l186-28q14-46 39-92-40-57-107-138-10-12-10-24 0-10 9-23 26-36 98.5-107.5t94.5-71.5q13 0 26 10l138 107q44-23 91-38 16-136 29-186 7-28 36-28h222q14 0 24.5 8.5t11.5 21.5l28 184q49 16 90 37l142-107q9-9 24-9 13 0 25 10 129 119 165 170 7 8 7 22 0 12-8 23-15 21-51 66.5t-54 70.5q26 50 41 98l183 28q13 2 21 12.5t8 23.5z"/></svg>
+                                </div>
+                                <!-- <p>{channel.allowed_users}</p> -->
+                                <!-- {#if channel.created_by == currentUser.id}
+                                    <button on:click={() => addAUserToChannel(channel.id)}>Add User</button>
+                                    <button on:click={() => removeAUserfromChannel(channel.id)}>Remove User</button>
+                                    <button on:click={() => updateAChannelName(channel.channel_name, channel.id, channel.created_by, currentUser.id)}>Update</button>
+                                    <button on:click={() => deleteChannel(channel.id, channel.created_by, currentUser.id)}>Delete</button>
+                                {:else}
+                                    <button on:click={() => hideAChannel(channel.id, channel.created_by, dbUser.id, dbUser.hidden_channels)}>Leave Channel</button>
+                                {/if} -->
+                            </div>
+                        {/if}
+                    {:else}
+                        <p>You are currently not part of any channels</p>
+                    {/each}
+                {:else} 
+                    <p>Loading...</p>
+                {/if}
+                
+            </div>
+            <div class="profile-container">
+                <div class="profile">
+                    <div class="profile-info">
+                        <img class="current-user-avatar" src="{currentUser.user_metadata.avatar_url}" alt="current user avatar">
+                        <p>{truncateString(currentUser.user_metadata.full_name, 29)}</p>
+                    </div>
+                    <div class="setting-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1152 896q0-106-75-181t-181-75-181 75-75 181 75 181 181 75 181-75 75-181zm512-109v222q0 12-8 23t-20 13l-185 28q-19 54-39 91 35 50 107 138 10 12 10 25t-9 23q-27 37-99 108t-94 71q-12 0-26-9l-138-108q-44 23-91 38-16 136-29 186-7 28-36 28h-222q-14 0-24.5-8.5t-11.5-21.5l-28-184q-49-16-90-37l-141 107q-10 9-25 9-14 0-25-11-126-114-165-168-7-10-7-23 0-12 8-23 15-21 51-66.5t54-70.5q-27-50-41-99l-183-27q-13-2-21-12.5t-8-23.5v-222q0-12 8-23t19-13l186-28q14-46 39-92-40-57-107-138-10-12-10-24 0-10 9-23 26-36 98.5-107.5t94.5-71.5q13 0 26 10l138 107q44-23 91-38 16-136 29-186 7-28 36-28h222q14 0 24.5 8.5t11.5 21.5l28 184q49 16 90 37l142-107q9-9 24-9 13 0 25 10 129 119 165 170 7 8 7 22 0 12-8 23-15 21-51 66.5t-54 70.5q26 50 41 98l183 28q13 2 21 12.5t8 23.5z"/></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="curC">
+            {#if $currentChannel}
+                <div class="curC-nav">
+                    <div class="curC-info">
+                        <h3 class="curC-name">{$currentChannel.channel_name}</h3>
+                        <div class="setting-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1152 896q0-106-75-181t-181-75-181 75-75 181 75 181 181 75 181-75 75-181zm512-109v222q0 12-8 23t-20 13l-185 28q-19 54-39 91 35 50 107 138 10 12 10 25t-9 23q-27 37-99 108t-94 71q-12 0-26-9l-138-108q-44 23-91 38-16 136-29 186-7 28-36 28h-222q-14 0-24.5-8.5t-11.5-21.5l-28-184q-49-16-90-37l-141 107q-10 9-25 9-14 0-25-11-126-114-165-168-7-10-7-23 0-12 8-23 15-21 51-66.5t54-70.5q-27-50-41-99l-183-27q-13-2-21-12.5t-8-23.5v-222q0-12 8-23t19-13l186-28q14-46 39-92-40-57-107-138-10-12-10-24 0-10 9-23 26-36 98.5-107.5t94.5-71.5q13 0 26 10l138 107q44-23 91-38 16-136 29-186 7-28 36-28h222q14 0 24.5 8.5t11.5 21.5l28 184q49 16 90 37l142-107q9-9 24-9 13 0 25 10 129 119 165 170 7 8 7 22 0 12-8 23-15 21-51 66.5t-54 70.5q26 50 41 98l183 28q13 2 21 12.5t8 23.5z"/></svg>
+                        </div>
+                        <div class="curC-users">
+                            <div class="user-avatars">
+                                {#each $allUsers as user (user.id)}
+                                    {#if $currentChannel.allowed_users != null && $currentChannel.allowed_users.includes(user.id)}
+                                        <img class="chat-avatar" src="{user.userdata.avatar_url}" alt="channel user avatar">
+                                    {:else if $currentChannel.created_by == user.id}
+                                        <img class="chat-avatar" src="{user.userdata.avatar_url}" alt="channel user avatar">
+                                    {/if}
+                                {/each}
+                                
+                            </div>
+                            {#if $currentChannel.allowed_users != null}
+                                <p class="user-nums">{$currentChannel.allowed_users.length + 1}</p>
+                            {:else}
+                                <p class="user-nums">1</p>
+                            {/if}
+                        </div>
+                    </div>
+                    <div class="curC-search">
+                        <input type="text">
+                    </div>
+                </div>
+                <div class="chat"></div>
+            {/if}
+        </div>
+    </div>
+    <!-- 
     <h2>All you channels</h2>
     {#each $channels as channel (channel.id)}
+        {#if dbUser && (dbUser.hidden_channels == null || !dbUser.hidden_channels.includes(channel.id))}
         <div class="channel">
             <h3 on:click={() => openAChannel(channel.id)}>{channel.channel_name}</h3>
             <h4>Users in this chat:</h4>
@@ -136,21 +273,16 @@ import { afterUpdate } from 'svelte';
                 <button on:click={() => removeAUserfromChannel(channel.id)}>Remove User</button>
                 <button on:click={() => updateAChannelName(channel.channel_name, channel.id, channel.created_by, currentUser.id)}>Update</button>
                 <button on:click={() => deleteChannel(channel.id, channel.created_by, currentUser.id)}>Delete</button>
+            {:else}
+                <button on:click={() => hideAChannel(channel.id, channel.created_by, dbUser.id, dbUser.hidden_channels)}>Leave Channel</button>
             {/if}
         </div>
-        {:else}
+        {/if}
+    {:else}
         <p>You currently are not apart of any channels</p>
     {/each}
-    <button on:click={createNewChannel}>
-        New Channel
-    </button>
 
-    <h2>All users</h2>
-    {#each $allUsers as user}
-        <img src="{user.userdata.avatar_url}" alt="profile" width="40px">
-        <p>{user.id}</p>
-        <p>{user.userdata.name}</p>
-    {/each}
+
 
     {#if $currentChannel}
         <h1>{$currentChannel.channel_name}</h1>
@@ -158,46 +290,256 @@ import { afterUpdate } from 'svelte';
         <h3>Messages:</h3>
         <div class="message-container" bind:this={messageContainer}>
             {#each $channelMessages as message (message.id)}
-                <span><img src="{message.user_id.userdata.avatar_url}" alt="profile" width="40px"></span> <span>{message.user_id.userdata.name}</span><span>{getDate(message.inserted_at)}</span>
-                <br>
-                <span>{message.message}</span>
-                {#if message.edited}
-                    <span>(edited)</span>
-                {/if}
-                {#if message.user_id.id == currentUser.id}
-                    <button on:click={() => updateAMessage(message.message, message.id, message.user_id.id, currentUser.id)}>Update</button>
-                    <button on:click={() => deleteMessage(message.id, message.user_id.id, currentUser.id)}>Delete</button>
-                {/if}
+                <div>
+                    <span><img src="{message.user_id.userdata.avatar_url}" alt="profile" width="40px"></span> <span>{message.user_id.userdata.name}</span><span>{getDate(message.inserted_at)}</span>
+                    <br>
+                    <pre>{message.message}</pre>
+                    {#if message.edited}
+                        <span>(edited)</span>
+                    {/if}
+                    {#if message.user_id.id == currentUser.id}
+                        <button on:click={() => updateAMessage(message.message, message.id, message.user_id.id, currentUser.id)}>Update</button>
+                        <button on:click={() => deleteMessage(message.id, message.user_id.id, currentUser.id)}>Delete</button>
+                    {/if}
+                </div>
                 <br>
             {/each}
-        </div>
-        <br>
-        <input 
-            type="text"
+            <textarea class="message-input-field"
             name="message"
             placeholder="Send a message"
             bind:value={messageInputVal}
-            on:keydown={(e) => submitOnEnter(e, messageInputVal, $currentChannel.id)}
-        />
-    {/if}
+            on:keypress={(e) => submitOnEnter(e, messageInputVal, $currentChannel.id)}
+            on:input={(e) => autoResize(e)}
+            />
+        </div>
+    {/if} -->
 
 </div>
 
 
 <style>
-
-    .channel {
-        border: solid black 2px;
-        margin-bottom: 10px;
+    .chat-page {
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
     }
 
-    .channel h3:hover {
+    .navbar {
+        background: #2D3262;
+        height: 60px;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .content {
+        display: flex;
+        height:calc(100% - 60px);
+        width: 100%;
+    }
+
+    .sidebar {
+        display: flex;
+        flex-direction: column;
+        /* justify-content: space-between; */
+        height: 100%;
+        width: 300px;
+        background: #090F42;
+    }
+
+    .add-chat-section {
+        height: 60px;
+        background: #070B32;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+    }
+    
+    .plus-icon {
+        width: 20px;
+        height: 20px;
+        padding: 10px;
+        color: inherit;
+    }
+    .plus-icon:hover {
+        color: rgba(255, 255, 255, 0.6);
+        cursor: pointer;
+    }
+    .plus-icon:active {
+        color: rgba(255, 255, 255, 0.8);
         cursor: pointer;
     }
 
-    .message-container {
-        max-height: 400px;
+    .channels-container {
+        height:calc(100% - 150px);
         overflow-y: scroll;
+        color: white;
+    }
+
+    .channel {
+        height: 50px;
+        margin: 5px 0px 5px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .channel-info {
+        display: flex;
+        align-items: center;
+        padding: 2px 5px 2px 5px;
+    }
+
+    .channel-icon {
+        min-width: 40px;
+        height: 40px;
+        background: white;
+        border-radius: 5px;
+        margin-right: 10px;
+    }
+
+    .setting-icon {
+        min-width: 20px;
+        height: 20px;
+        padding: 10px;
+        color: inherit;
+    }
+    .setting-icon:hover {
+        color: rgba(255, 255, 255, 0.6);
+        cursor: pointer;
+    }
+
+    .setting-icon:active {
+        color: rgba(255, 255, 255, 0.8);
+        cursor: pointer;
+    }
+
+    .profile-container {
+        height: 90px;
+        width: 100%;
+        background: #070B32;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .profile {
+        max-width: 80%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .profile-info {
+        display: flex;
+        color: white;
+        display: flex;
+        align-items: center;
+    }
+
+    .current-user-avatar {
+        width: 40px;
+        border-radius: 50%;
+        margin-right: 10px;
+    }
+
+    .curC {
+        height: 100%;
+        width:calc(100% - 300px);
+        background: white;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .curC-nav {
+        background: #F9F9F9;
+        height: 58px;
+        border-bottom: 2px solid #EDEDED;
+        padding: 0px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .curC-info {
+        display: flex;
+        align-items: center;
+    }
+
+    .curC-info .setting-icon:hover {
+        color: rgba(0, 0, 0, 0.6);
+        cursor: pointer;
+    }
+
+    .curC-info .setting-icon:active {
+        color: rgba(0, 0, 0, 0.8);
+        cursor: pointer;
+    }
+
+    .curC-users {
+        min-width: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border: 1px solid #BBBBBB;
+        border-radius: 5px;
+        padding: 4px;
+        margin-left: 10px;
+    }
+
+    .curC-users:hover {
+        cursor: pointer;
+        background-color: rgba(0,0,0,0.04); 
+        box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
+    }
+
+    .curC-users:focus {
+        cursor: pointer;
+        background-color: rgba(0,0,0,0.12); 
+        box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
+    }
+
+    .curC-users:active {
+        cursor: pointer;
+        background-color: rgba(0,0,0,0.12); 
+        box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
+    }
+
+    .user-avatars {
+        display: flex;
+        flex-direction: row-reverse;
+    }
+
+    .chat-avatar {
+        min-width: 28px;
+        height: 28px;
+        background: gray;
+        border: 1px solid #ffffff;
+        border-radius: 50%;
+        margin-right: -5px;
+    }
+
+    .user-nums {
+        margin-left: 13px;
+    }
+
+
+    pre {
+        font-family: inherit;
+    }
+
+
+    @media (max-width: 768px) {
+        .sidebar {
+            display: none;
+        }
+
+        .chat {
+            width: 100%;
+        }
     }
     
 </style>

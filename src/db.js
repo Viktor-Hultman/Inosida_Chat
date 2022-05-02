@@ -8,7 +8,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 const userStore = writable(supabase.auth.currentUser)
 
-export const user = writable(false);
+export const thisDBUser = writable(null);
 export const channels = writable([])
 export const allUsers = writable([])
 export const currentChannel = writable(false)
@@ -39,6 +39,11 @@ channels.subscribe((channels) => {
 export let localCurrentChannel
 currentChannel.subscribe((channel) => {
   localCurrentChannel = channel
+})
+
+export let localUser
+thisDBUser.subscribe((user) => {
+  localUser = user
 })
 
 
@@ -80,6 +85,19 @@ const userChannels = supabase.from('channels')
   console.log(payload);
 })
 .on('DELETE', payload => channels.update((channels) => channels.filter((channel) => channel.id !== payload.old.id)))
+.subscribe()
+
+const theUser = supabase.from('users')
+.on('UPDATE', async payload => {
+  let channelArr = []
+  channels.update((channels) => channels.filter((channel) => {
+    if(!payload.new.hidden_channels.includes(channel.id)){
+      channelArr.push(channel)
+    }
+  }))
+  channels.update(channels => [...channelArr])
+  console.log(payload)
+})
 .subscribe()
 
 
@@ -142,6 +160,25 @@ export const deleteChannel = async (channel_id, channel_user_id, user_id) => {
   channels.update((channels) => channels.filter((channel) => channel.id !== channel_id));
 }
 
+export const hideChannel = async (channel_id, channel_user_id, user_id, user_hidden_channels) => {
+  if (channel_user_id == user_id){
+    return 
+  }
+  if (user_hidden_channels.includes(channel_id)){
+    return
+  }
+
+  let updatedList = [...user_hidden_channels, channel_id]
+
+  const { data, error } = await supabase.from('users').update({hidden_channels: updatedList}).match({id: user_id})
+  addMessage('This user has left this channel and will not be able to see any messages from this chat until they choose to "enter" this channel again!', channel_id, user_id)
+  currentChannel.set(false)
+  if(error){
+    return console.error(error);
+  }
+  return data
+}
+
 
 export const loadChannels = async () => {
   const { data, error } = await supabase.from('channels').select('*')
@@ -149,7 +186,7 @@ export const loadChannels = async () => {
   if(error){
     return console.error(error);
   }
-
+  console.log("loading channels")
   channels.set(data)
 }
 
@@ -250,7 +287,15 @@ export const getMessagesOfChannel = async (channel_id) => {
   channelMessages.set(data)
 }
 
-loadChannels();
+export const getCurrentDBUser = async (user_id) => {
+  const { data, error } = await supabase.from('users').select('*').match({id: user_id})
+  // const { data, error } = await supabase.from('messages').select(`*, user_id (userdata, id)`).match({channel_id: channel_id})
+
+  if(error){
+    return console.error(error);
+  }
+  thisDBUser.set(data)
+}
 
 supabase.auth.onAuthStateChange((event, session) => {
     if (event == 'SIGNED_IN') {
