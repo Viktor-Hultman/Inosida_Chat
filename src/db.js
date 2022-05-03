@@ -9,7 +9,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 const userStore = writable(supabase.auth.currentUser)
 
 export const thisDBUser = writable(null);
-export const channels = writable([])
+export const channels = writable(null)
 export const allUsers = writable([])
 export const currentChannel = writable(false)
 export const channelMessages = writable([])
@@ -29,7 +29,7 @@ channelMessages.subscribe((messages) => {
 export let localChannels
 channels.subscribe((channels) => {
   localChannels = channels
-  if(localChannels.length > 0){
+  if(localChannels != null){
     localChannels.sort(function (a, b) {
       return a.id - b.id;
     });
@@ -209,6 +209,7 @@ export const createChannel = async (name, user_id) => {
 
   currentChannel.set(data)
   getMessagesOfChannel(data.id)
+  localStorage.setItem('lastOpenedChannel', data.id)
   loadChannels()
 }
 

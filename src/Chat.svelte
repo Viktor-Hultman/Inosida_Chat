@@ -82,6 +82,8 @@ import { afterUpdate } from 'svelte';
     }
 
     const openAChannel = async (channel_id) => {
+        //Setting the id of the opened channel to local storage
+        localStorage.setItem('lastOpenedChannel', channel_id)
         openChannel(channel_id)
     }
 
@@ -114,17 +116,10 @@ import { afterUpdate } from 'svelte';
         }
     }
 
-    // if ((event.keyCode == 10 || event.keyCode == 13) && !event.shiftKey){
-    //         console.log("New lines can only be created when holding shift and enter")
-    //         event.preventDefault();
-    //         return
-    // }
 
     let messageContainer
-
-    
     $: if($channelMessages) { //Checks for updates, and if channelMessages has changed then run the code
-        console.log($channelMessages);
+        // console.log($channelMessages);
             if($scrollTheChat) { // Checks if the scrollTheChat writable var is true
             setTimeout(() => { //Timeout to allow the message to be added before scrolling
                 console.log("Now the chat should scroll");
@@ -134,12 +129,31 @@ import { afterUpdate } from 'svelte';
 
         }
     }
+    let lastOpenedChannelId = null
+
+    //Getting the previous opened channel id if it exist in storage
+    if (localStorage.getItem('lastOpenedChannel')){
+        lastOpenedChannelId = localStorage.getItem('lastOpenedChannel')
+    }
+
+    $: if ($channels != null && lastOpenedChannelId != null) {
+        // If the user is part of any channel and has selected a 
+        // chat previous that is still logged in local storage
+        // open that previous channel when page loads
+        openChannel(lastOpenedChannelId)
+    } else if ($channels != null && lastOpenedChannelId == null) {
+        // Else if there is no previous opened channel logged,
+        // open the "first" channel
+        // openChannel($channels[0].id)
+        console.log($channels)
+    }
+
     let dbUser = null
 
-    $:console.log($currentChannel);
+    $: console.log($currentChannel);
+
     $: if($thisDBUser) {
         dbUser = $thisDBUser[0]
-        console.log(dbUser)
     }
 
     const getDate = (db_date) => {
@@ -184,7 +198,7 @@ import { afterUpdate } from 'svelte';
                 </div>
             </div>
             <div class="channels-container">
-                {#if $channels != []}
+                {#if $channels != null}
                     {#each $channels as channel (channel.id)}
                         {#if dbUser && (dbUser.hidden_channels == null || !dbUser.hidden_channels.includes(channel.id))}
                             <div class="channel">
@@ -256,7 +270,28 @@ import { afterUpdate } from 'svelte';
                         <input type="text">
                     </div>
                 </div>
-                <div class="chat"></div>
+                <div class="chat" bind:this={messageContainer}>
+                    {#each $channelMessages as message (message.id)}
+                        <div class="message">
+                            <img class="message-avatar" src="{message.user_id.userdata.avatar_url}" alt="message-avatar">
+                            <div class="message-content">
+                                <div class="message-data">
+                                    <h4 class="message-name">{message.user_id.userdata.name}</h4>
+                                    <p class="message-date">{getDate(message.inserted_at)}</p>
+                                    {#if message.edited}
+                                        <span class="edited-text">(edited)</span>
+                                    {/if}
+                                </div>
+                                <pre class="message-text">{message.message}</pre>
+                            </div>
+                            <!-- {#if message.user_id.id == currentUser.id}
+                                <button on:click={() => updateAMessage(message.message, message.id, message.user_id.id, currentUser.id)}>Update</button>
+                                <button on:click={() => deleteMessage(message.id, message.user_id.id, currentUser.id)}>Delete</button>
+                            {/if} -->
+                        </div>
+                    {/each}
+                </div>
+                <div class="chat-input"></div>
             {/if}
         </div>
     </div>
@@ -410,7 +445,6 @@ import { afterUpdate } from 'svelte';
         color: rgba(255, 255, 255, 0.6);
         cursor: pointer;
     }
-
     .setting-icon:active {
         color: rgba(255, 255, 255, 0.8);
         cursor: pointer;
@@ -456,7 +490,7 @@ import { afterUpdate } from 'svelte';
 
     .curC-nav {
         background: #F9F9F9;
-        height: 58px;
+        min-height: 58px;
         border-bottom: 2px solid #EDEDED;
         padding: 0px 20px;
         display: flex;
@@ -526,9 +560,67 @@ import { afterUpdate } from 'svelte';
         margin-left: 13px;
     }
 
+    .chat {
+        height:calc(100% - 150px);
+        max-width: 100%;
+        overflow-y: scroll;
+        overflow-x: hidden;
+        padding: 20px 0px;
+    }
+
+    .message {
+        padding: 5px 20px 5px 20px;
+        max-width: 100%;
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 10px;
+    }
+
+    .message:hover {
+        background-color: rgba(0,0,0,0.04); 
+    }
+
+    .message-avatar {
+        width: 40px;
+        border-radius: 50%;
+        margin-right: 15px;
+    }
+
+    .message-data {
+        display: flex;
+        align-items: baseline;
+    }
+
+    .message-name {
+        margin-right: 5px;
+    }
+
+    .message-date {
+        font-size: 14px;
+        margin-right: 5px;
+    }
+    
+    .edited-text {
+        font-size: 12px;
+        align-self: flex-start;
+    }
+
+
+
+    .chat-input {
+        min-height: 88px;
+        background: #F9F9F9;
+        border-top: 2px solid #EDEDED;
+    }
+
 
     pre {
         font-family: inherit;
+        white-space: pre-wrap;       /* Since CSS 2.1 */
+        white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+        white-space: -pre-wrap;      /* Opera 4-6 */
+        white-space: -o-pre-wrap;    /* Opera 7 */
+        word-wrap: break-word;
     }
 
 
