@@ -169,6 +169,10 @@ import { afterUpdate } from 'svelte';
         }
     }
 
+    function removeFocus(event) {
+	    event.target.blur();
+    }
+
     getCurrentDBUser(currentUser.id)
 
 </script>
@@ -201,8 +205,8 @@ import { afterUpdate } from 'svelte';
                 {#if $channels != null}
                     {#each $channels as channel (channel.id)}
                         {#if dbUser && (dbUser.hidden_channels == null || !dbUser.hidden_channels.includes(channel.id))}
-                            <div class="channel">
-                                <div class="channel-info" on:click={() => openAChannel(channel.id)}>
+                            <div class="channel" on:click={() => openAChannel(channel.id)}>
+                                <div class="channel-info">
                                     <div class="channel-icon"></div>
                                     <p>{truncateString(channel.channel_name, 29)}</p>
                                 </div>
@@ -291,34 +295,53 @@ import { afterUpdate } from 'svelte';
                         </div>
                     {/each}
                 </div>
-                <div class="chat-input"></div>
+                <div class="chat-input-container">
+                    <div class="input-formats">
+                        <div id="bold-icon" class="format-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 1792 1792"><path d="M747 1521q74 32 140 32 376 0 376-335 0-114-41-180-27-44-61.5-74t-67.5-46.5-80.5-25-84-10.5-94.5-2q-73 0-101 10 0 53-.5 159t-.5 158q0 8-1 67.5t-.5 96.5 4.5 83.5 12 66.5zm-14-746q42 7 109 7 82 0 143-13t110-44.5 74.5-89.5 25.5-142q0-70-29-122.5t-79-82-108-43.5-124-14q-50 0-130 13 0 50 4 151t4 152q0 27-.5 80t-.5 79q0 46 1 69zm-541 889l2-94q15-4 85-16t106-27q7-12 12.5-27t8.5-33.5 5.5-32.5 3-37.5.5-34v-65.5q0-982-22-1025-4-8-22-14.5t-44.5-11-49.5-7-48.5-4.5-30.5-3l-4-83q98-2 340-11.5t373-9.5q23 0 68 .5t68 .5q70 0 136.5 13t128.5 42 108 71 74 104.5 28 137.5q0 52-16.5 95.5t-39 72-64.5 57.5-73 45-84 40q154 35 256.5 134t102.5 248q0 100-35 179.5t-93.5 130.5-138 85.5-163.5 48.5-176 14q-44 0-132-3t-132-3q-106 0-307 11t-231 12z"/></svg>
+                        </div>
+                        <div id="italic-icon" class="format-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 1792 1792"><path d="M384 1662l17-85q22-7 61.5-16.5t72-19 59.5-23.5q28-35 41-101 1-7 62-289t114-543.5 52-296.5v-25q-24-13-54.5-18.5t-69.5-8-58-5.5l19-103q33 2 120 6.5t149.5 7 120.5 2.5q48 0 98.5-2.5t121-7 98.5-6.5q-5 39-19 89-30 10-101.5 28.5t-108.5 33.5q-8 19-14 42.5t-9 40-7.5 45.5-6.5 42q-27 148-87.5 419.5t-77.5 355.5q-2 9-13 58t-20 90-16 83.5-6 57.5l1 18q17 4 185 31-3 44-16 99-11 0-32.5 1.5t-32.5 1.5q-29 0-87-10t-86-10q-138-2-206-2-51 0-143 9t-121 11z"/></svg>
+                        </div>
+                        <div id="o-list" class="format-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 1792 1792"><path d="M381 1620q0 80-54.5 126t-135.5 46q-106 0-172-66l57-88q49 45 106 45 29 0 50.5-14.5t21.5-42.5q0-64-105-56l-26-56q8-10 32.5-43.5t42.5-54 37-38.5v-1q-16 0-48.5 1t-48.5 1v53h-106v-152h333v88l-95 115q51 12 81 49t30 88zm2-627v159h-362q-6-36-6-54 0-51 23.5-93t56.5-68 66-47.5 56.5-43.5 23.5-45q0-25-14.5-38.5t-39.5-13.5q-46 0-81 58l-85-59q24-51 71.5-79.5t105.5-28.5q73 0 123 41.5t50 112.5q0 50-34 91.5t-75 64.5-75.5 50.5-35.5 52.5h127v-60h105zm1409 319v192q0 13-9.5 22.5t-22.5 9.5h-1216q-13 0-22.5-9.5t-9.5-22.5v-192q0-14 9-23t23-9h1216q13 0 22.5 9.5t9.5 22.5zm-1408-899v99h-335v-99h107q0-41 .5-121.5t.5-121.5v-12h-2q-8 17-50 54l-71-76 136-127h106v404h108zm1408 387v192q0 13-9.5 22.5t-22.5 9.5h-1216q-13 0-22.5-9.5t-9.5-22.5v-192q0-14 9-23t23-9h1216q13 0 22.5 9.5t9.5 22.5zm0-512v192q0 13-9.5 22.5t-22.5 9.5h-1216q-13 0-22.5-9.5t-9.5-22.5v-192q0-13 9.5-22.5t22.5-9.5h1216q13 0 22.5 9.5t9.5 22.5z"/></svg>
+                        </div>
+                        <div id="u-icon" class="format-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 1792 1792"><path d="M384 1408q0 80-56 136t-136 56-136-56-56-136 56-136 136-56 136 56 56 136zm0-512q0 80-56 136t-136 56-136-56-56-136 56-136 136-56 136 56 56 136zm1408 416v192q0 13-9.5 22.5t-22.5 9.5h-1216q-13 0-22.5-9.5t-9.5-22.5v-192q0-13 9.5-22.5t22.5-9.5h1216q13 0 22.5 9.5t9.5 22.5zm-1408-928q0 80-56 136t-136 56-136-56-56-136 56-136 136-56 136 56 56 136zm1408 416v192q0 13-9.5 22.5t-22.5 9.5h-1216q-13 0-22.5-9.5t-9.5-22.5v-192q0-13 9.5-22.5t22.5-9.5h1216q13 0 22.5 9.5t9.5 22.5zm0-512v192q0 13-9.5 22.5t-22.5 9.5h-1216q-13 0-22.5-9.5t-9.5-22.5v-192q0-13 9.5-22.5t22.5-9.5h1216q13 0 22.5 9.5t9.5 22.5z"/></svg>
+                        </div>
+                        <div id="link-icon" class="format-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1520 1216q0-40-28-68l-208-208q-28-28-68-28-42 0-72 32 3 3 19 18.5t21.5 21.5 15 19 13 25.5 3.5 27.5q0 40-28 68t-68 28q-15 0-27.5-3.5t-25.5-13-19-15-21.5-21.5-18.5-19q-33 31-33 73 0 40 28 68l206 207q27 27 68 27 40 0 68-26l147-146q28-28 28-67zm-703-705q0-40-28-68l-206-207q-28-28-68-28-39 0-68 27l-147 146q-28 28-28 67 0 40 28 68l208 208q27 27 68 27 42 0 72-31-3-3-19-18.5t-21.5-21.5-15-19-13-25.5-3.5-27.5q0-40 28-68t68-28q15 0 27.5 3.5t25.5 13 19 15 21.5 21.5 18.5 19q33-31 33-73zm895 705q0 120-85 203l-147 146q-83 83-203 83-121 0-204-85l-206-207q-83-83-83-203 0-123 88-209l-88-88q-86 88-208 88-120 0-204-84l-208-208q-84-84-84-204t85-203l147-146q83-83 203-83 121 0 204 85l206 207q83 83 83 203 0 123-88 209l88 88q86-88 208-88 120 0 204 84l208 208q84 84 84 204z"/></svg>
+                        </div>
+                        <div id="emoji-icon" class="format-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="22px" height="22px" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1262 1075q-37 121-138 195t-228 74-228-74-138-195q-8-25 4-48.5t38-31.5q25-8 48.5 4t31.5 38q25 80 92.5 129.5t151.5 49.5 151.5-49.5 92.5-129.5q8-26 32-38t49-4 37 31.5 4 48.5zm-494-435q0 53-37.5 90.5t-90.5 37.5-90.5-37.5-37.5-90.5 37.5-90.5 90.5-37.5 90.5 37.5 37.5 90.5zm512 0q0 53-37.5 90.5t-90.5 37.5-90.5-37.5-37.5-90.5 37.5-90.5 90.5-37.5 90.5 37.5 37.5 90.5zm256 256q0-130-51-248.5t-136.5-204-204-136.5-248.5-51-248.5 51-204 136.5-136.5 204-51 248.5 51 248.5 136.5 204 204 136.5 248.5 51 248.5-51 204-136.5 136.5-204 51-248.5zm128 0q0 209-103 385.5t-279.5 279.5-385.5 103-385.5-103-279.5-279.5-103-385.5 103-385.5 279.5-279.5 385.5-103 385.5 103 279.5 279.5 103 385.5z"/></svg>
+                        </div>
+                    </div>
+                    <div class="input-and-buttons">
+                        <textarea class="message-input-field"
+                            name="message"
+                            placeholder="Send a message"
+                            bind:value={messageInputVal}
+                            on:keypress={(e) => submitOnEnter(e, messageInputVal, $currentChannel.id)}
+                            on:input={(e) => autoResize(e)}
+                        />
+                        <div class="message-buttons">
+                            <button class="send-button send-button-active"
+                            on:click={(e) => removeFocus(e)}
+                            >
+                                Skicka
+                            </button>
+                            <button class="time-button"
+                            on:click={(e) => removeFocus(e)}
+                            >
+                                Tillsvidare
+                            </button>
+                        </div>
+                    </div>
+                </div>
             {/if}
         </div>
     </div>
     <!-- 
-    <h2>All you channels</h2>
-    {#each $channels as channel (channel.id)}
-        {#if dbUser && (dbUser.hidden_channels == null || !dbUser.hidden_channels.includes(channel.id))}
-        <div class="channel">
-            <h3 on:click={() => openAChannel(channel.id)}>{channel.channel_name}</h3>
-            <h4>Users in this chat:</h4>
-            <p>{channel.allowed_users}</p>
-            {#if channel.created_by == currentUser.id}
-                <button on:click={() => addAUserToChannel(channel.id)}>Add User</button>
-                <button on:click={() => removeAUserfromChannel(channel.id)}>Remove User</button>
-                <button on:click={() => updateAChannelName(channel.channel_name, channel.id, channel.created_by, currentUser.id)}>Update</button>
-                <button on:click={() => deleteChannel(channel.id, channel.created_by, currentUser.id)}>Delete</button>
-            {:else}
-                <button on:click={() => hideAChannel(channel.id, channel.created_by, dbUser.id, dbUser.hidden_channels)}>Leave Channel</button>
-            {/if}
-        </div>
-        {/if}
-    {:else}
-        <p>You currently are not apart of any channels</p>
-    {/each}
-
-
-
     {#if $currentChannel}
         <h1>{$currentChannel.channel_name}</h1>
     
@@ -339,13 +362,7 @@ import { afterUpdate } from 'svelte';
                 </div>
                 <br>
             {/each}
-            <textarea class="message-input-field"
-            name="message"
-            placeholder="Send a message"
-            bind:value={messageInputVal}
-            on:keypress={(e) => submitOnEnter(e, messageInputVal, $currentChannel.id)}
-            on:input={(e) => autoResize(e)}
-            />
+            
         </div>
     {/if} -->
 
@@ -415,10 +432,23 @@ import { afterUpdate } from 'svelte';
 
     .channel {
         height: 50px;
-        margin: 5px 0px 5px 20px;
+        margin: 5px 0px 5px 0px;
+        padding-left: 20px;
         display: flex;
         align-items: center;
         justify-content: space-between;
+    }
+    .channel:hover {
+        cursor: pointer;
+        background-color: rgba(0,0,0,0.12); 
+    }
+    .channel:focus {
+        cursor: pointer;
+        background-color: rgba(0,0,0,0.12); 
+    }
+    .channel:active {
+        cursor: pointer;
+        background-color: rgba(0,0,0,0.20); 
     }
 
     .channel-info {
@@ -489,9 +519,9 @@ import { afterUpdate } from 'svelte';
     }
 
     .curC-nav {
-        background: #F9F9F9;
+        background: #f3f3f3;
         min-height: 58px;
-        border-bottom: 2px solid #EDEDED;
+        border-bottom: 2px solid #dedede;
         padding: 0px 20px;
         display: flex;
         align-items: center;
@@ -605,14 +635,106 @@ import { afterUpdate } from 'svelte';
         align-self: flex-start;
     }
 
-
-
-    .chat-input {
+    .chat-input-container {
         min-height: 88px;
-        background: #F9F9F9;
-        border-top: 2px solid #EDEDED;
+        background: #f3f3f3;
+        border-top: 2px solid #dedede;
+        padding: 0px 20px;
     }
 
+    .input-formats {
+        display: flex;
+        margin: 5px 0px;
+    }
+
+    .format-icon {
+        min-width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        fill: #333;
+        margin-right: 12px;
+        border-radius: 5px;
+    }
+    .format-icon:hover {
+        cursor: pointer;
+        background: rgba(0,0,0,0.12);
+    }
+
+    .input-and-buttons {
+        display: flex;
+        align-items: center;
+    }
+
+    .message-input-field {
+        width: calc(100% - 200px);
+        height: 40px;
+        resize: none;
+        border-radius: 5px;
+        padding: 10px;
+    }
+
+    .message-buttons {
+        width: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+    }
+    
+    .send-button {
+        background-color: #38394A;
+        color: #DEDEDE;
+        height: 40px;
+        border-radius: 10px;
+        padding: 0px 10px;
+        margin-right: 20px;
+    }
+
+    .send-button-active {
+        background-color: #000852;
+        color: #fff;
+    }
+    .send-button-active:hover {
+        cursor: pointer;
+        background-color: #000a56;
+        box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
+    }
+    .send-button-active:focus {
+        cursor: pointer;
+        background-color: #000c65;
+        box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
+    }
+    .send-button-active:active {
+        cursor: pointer;
+        border-color: #bababa;
+        background-color: #000c65;
+        box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
+    }
+
+    .time-button {
+        background-color: #fff;
+        color: #333;
+        height: 40px;
+        border-radius: 10px;
+        padding: 0px 10px;
+    }
+    .time-button:hover {
+        cursor: pointer;
+        background-color: rgba(0,0,0,0.04); 
+        box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
+    }
+    .time-button:focus {
+        cursor: pointer;
+        background-color: rgba(0,0,0,0.12); 
+        box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
+    }
+    .time-button:active {
+        cursor: pointer;
+        border-color: #bababa;
+        background-color: rgba(0,0,0,0.12); 
+        box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
+    }
 
     pre {
         font-family: inherit;
