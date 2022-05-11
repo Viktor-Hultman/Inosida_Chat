@@ -1,14 +1,14 @@
 # Inosida_Chat
 
-Inosida_Chat is an internal chat service that I am currently creating for Inosida Webbyrå. This project is produced as my thesis at KYH.
+Inosida_Chat is an internal chat service that I am currently creating for [Inosida Webbyrå](https://inosida.se/). This project is produced as my thesis at [KYH](https://kyh.se/).
 
 ## Description
 
-This project was made as an internal service for Inosida Webbyrå.
+This project was made as an internal service for [Inosida Webbyrå](https://inosida.se/).
 I have taken insiration from several chat services such as Discord and Slack.
-I created this project as my final thesis for my education at KYH Stockholm.
+I created this project as my final thesis for my education at [KYH](https://kyh.se/).
 
-This project is used with a Supabase database to read, insert, update and delete channels and messages.
+This project was used togheter with a [Supabase](https://app.supabase.io/) database to read, insert, update and delete channels and messages.
 
 ## Includes
 
