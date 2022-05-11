@@ -104,6 +104,10 @@ import { afterUpdate } from 'svelte';
         e.target.style.height = 'auto';
         e.target.style.height = e.target.scrollHeight + 'px';
     }
+
+    const checkInputVal = (e) => {
+        console.log(e)
+    }
     
 
     let messageInputVal = "";
@@ -121,6 +125,18 @@ import { afterUpdate } from 'svelte';
             return
         }
     }
+
+    const submitOnButton = (event, message, channel_id) => {
+        if(messageInputVal == "") {
+            event.preventDefault();
+            return
+        }
+        console.log(message.length, messageInputVal.length);
+        addMessage(message, channel_id, currentUser.id)
+        messageInputVal = ""; 
+    }
+
+    
 
 
     let messageContainer
@@ -167,7 +183,7 @@ import { afterUpdate } from 'svelte';
         return msgDate
     }
 
-    function truncateString(str, num) {
+    const truncateString = (str, num) => {
         if (str.length > num) {
             return str.slice(0, num) + "...";
         } else {
@@ -175,16 +191,79 @@ import { afterUpdate } from 'svelte';
         }
     }
 
-    function removeFocus(event) {
+    const removeFocus = (event) => {
 	    event.target.blur();
     }
 
+    let currentHighestZindex = 0
+
+    let dropdown
+    let dropdownWidth
+
+    let open = false
+
+    const calcCenter = (target, elem, size) => {
+
+        console.log(dropdownWidth)
+
+        let leftPX = ((target.offsetWidth / 2) - (size / 2) + target.offsetLeft)
+        let topPX = target.offsetTop + target.offsetHeight + 5
+
+        elem.style.left = leftPX + "px"
+        elem.style.top = topPX + "px"
+    }
+
+    const openUserList = (event) => {
+        if(open == true) {
+            dropdown.style.display = "none";
+            dropdown.style.zIndex = currentHighestZindex - 1
+            currentHighestZindex -= 1
+            open = false
+            return
+        }
+        
+        dropdown.style.display = "block";
+        dropdown.style.zIndex = currentHighestZindex + 1
+        currentHighestZindex += 1
+
+        if(dropdownWidth == 0) {
+            setTimeout(() => { 
+
+                console.log(dropdownWidth)
+                if(event.target.className.includes("curC-users")) {
+                    console.log("Clicked the div")
+                    calcCenter(event.target, dropdown, dropdownWidth)
+                } else if (event.target.parentNode.className.includes("curC-users")) {
+                    calcCenter(event.target.parentNode, dropdown, dropdownWidth)
+                } else if (event.target.parentNode.parentNode.className.includes("curC-users")) {
+                    calcCenter(event.target.parentNode.parentNode, dropdown, dropdownWidth)
+                }
+
+                
+
+            }, 100)
+        }
+        open = true
+    }
+
     getCurrentDBUser(currentUser.id)
+
+    
 
 </script>
 
 
 <div class="chat-page">
+    <div class="select-users" bind:offsetWidth={dropdownWidth} bind:this={dropdown}>
+        {#each $allUsers as user (user.id)}
+        {#if $currentChannel.allowed_users != null && $currentChannel.allowed_users.includes(user.id) || $currentChannel.created_by == user.id}
+            <div class="chat-user">
+                <img class="chat-avatar" src="{user.userdata.avatar_url}" alt="channel user avatar">
+                <p>{truncateString(user.userdata.full_name, 20)}</p>
+            </div>
+        {/if}
+    {/each}
+    </div>
     <nav class="navbar">
         <svg xmlns="http://www.w3.org/2000/svg" width="112" height="30" viewBox="0 0 112 30" fill="none">
             <rect x="0.5" y="27.3667" width="46.9508" height="2.51522" fill="white"/>
@@ -258,12 +337,12 @@ import { afterUpdate } from 'svelte';
                         <!-- <div class="setting-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1152 896q0-106-75-181t-181-75-181 75-75 181 75 181 181 75 181-75 75-181zm512-109v222q0 12-8 23t-20 13l-185 28q-19 54-39 91 35 50 107 138 10 12 10 25t-9 23q-27 37-99 108t-94 71q-12 0-26-9l-138-108q-44 23-91 38-16 136-29 186-7 28-36 28h-222q-14 0-24.5-8.5t-11.5-21.5l-28-184q-49-16-90-37l-141 107q-10 9-25 9-14 0-25-11-126-114-165-168-7-10-7-23 0-12 8-23 15-21 51-66.5t54-70.5q-27-50-41-99l-183-27q-13-2-21-12.5t-8-23.5v-222q0-12 8-23t19-13l186-28q14-46 39-92-40-57-107-138-10-12-10-24 0-10 9-23 26-36 98.5-107.5t94.5-71.5q13 0 26 10l138 107q44-23 91-38 16-136 29-186 7-28 36-28h222q14 0 24.5 8.5t11.5 21.5l28 184q49 16 90 37l142-107q9-9 24-9 13 0 25 10 129 119 165 170 7 8 7 22 0 12-8 23-15 21-51 66.5t-54 70.5q26 50 41 98l183 28q13 2 21 12.5t8 23.5z"/></svg>
                         </div> -->
-                        <div class="curC-users">
+                        <div class="curC-users" 
+                            on:click={(e) => openUserList(e)}
+                        >
                             <div class="user-avatars">
                                 {#each $allUsers as user (user.id)}
-                                    {#if $currentChannel.allowed_users != null && $currentChannel.allowed_users.includes(user.id)}
-                                        <img class="chat-avatar" src="{user.userdata.avatar_url}" alt="channel user avatar">
-                                    {:else if $currentChannel.created_by == user.id}
+                                    {#if $currentChannel.allowed_users != null && $currentChannel.allowed_users.includes(user.id) || $currentChannel.created_by == user.id}
                                         <img class="chat-avatar" src="{user.userdata.avatar_url}" alt="channel user avatar">
                                     {/if}
                                 {/each}
@@ -329,10 +408,12 @@ import { afterUpdate } from 'svelte';
                             bind:value={messageInputVal}
                             on:keypress={(e) => submitOnEnter(e, messageInputVal, $currentChannel.id)}
                             on:input={(e) => autoResize(e)}
+                            on:input={(e) => checkInputVal(e)}
                         />
                         <div class="message-buttons">
                             <button class="send-button send-button-active"
                             on:click={(e) => removeFocus(e)}
+                            on:click={(e) => submitOnButton(e, messageInputVal, $currentChannel.id)}
                             >
                                 Skicka
                             </button>
@@ -554,11 +635,31 @@ import { afterUpdate } from 'svelte';
         cursor: pointer;
     }
 
+    .select-users {
+        position: absolute;
+        border: 1px solid #BBBBBB;
+        background: #f3f3f3;
+        border-radius: 5px;
+        display: none; 
+        top: -20000px;
+        padding: 10px 10px 5px 10px;
+    }
+
+    .select-users img {
+        margin-right: 5px;
+    }
+
+    .chat-user {
+        display: flex;
+        margin-bottom: 5px;
+    }
+
     .curC-users {
         min-width: 30px;
         display: flex;
         align-items: center;
         justify-content: space-between;
+        background: #f3f3f3;
         border: 1px solid #BBBBBB;
         border-radius: 5px;
         padding: 4px;
@@ -762,8 +863,12 @@ import { afterUpdate } from 'svelte';
             display: none;
         }
 
-        .chat {
+        .curC {
             width: 100%;
+        }
+
+        .chat {
+            
         }
     }
     
