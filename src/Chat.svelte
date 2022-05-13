@@ -35,7 +35,7 @@ import { afterUpdate } from 'svelte';
 
 
     const trimChannelName = (text) => {
-        return text
+        let result = text
         .toString()
         .trim()
         // .toLowerCase()
@@ -44,27 +44,24 @@ import { afterUpdate } from 'svelte';
         .replace(/--+/g, '-') // Replace multiple - with single -
         // .replace(/^-+/, '') // Trim - from start of text
         // .replace(/-+$/, '') // Trim - from end of text
+
+        console.log(result)
+        return result
     }
 
     const createNewChannel = async () => {
-        const name = prompt('Please enter the channel name')
-        if (name) {
-        createChannel(trimChannelName(name), currentUser.id)
+        const name = prompt('Skriv in namnet för ditt nya chattrum')
+        if (name && name != "") {
+            createChannel(trimChannelName(name), currentUser.id)
         }
     }
 
-    const addAUserToChannel = async (channel_id) => {
-        const user_id = prompt('Please enter the id of the person you want to add')
-        if (user_id) {
-            getChannelToAddUser(channel_id, user_id)
-        }
+    const addAUserToChannel = async (channel_id, user_id) => {
+        getChannelToAddUser(channel_id, user_id)
     }
 
-    const removeAUserfromChannel = async (channel_id) => {
-        const user_id = prompt('Please enter the id of the person you want to remove')
-        if (user_id) {
-            getChannelToRemoveUser(channel_id, user_id)
-        }
+    const removeAUserfromChannel = async (channel_id, user_id) => {
+            getChannelToRemoveUser(channel_id, user_id )
     }
 
     const updateAMessage = async (message, message_id, message_user_id, user_id) => {
@@ -85,11 +82,13 @@ import { afterUpdate } from 'svelte';
         if(channel_id == $currentChannel.id){
             return console.log("Channel already open");
         }
-        if(event.target.nodeName !== "DIV"){
+        if(event.target.nodeName != "DIV" && event.target.nodeName != "P"){
             return console.log("You clicked something else than the channel div");
         }
         //Setting the id of the opened channel to local storage
         localStorage.setItem('lastOpenedChannel', channel_id)
+        chatSettinsDropdown.style.display = "none"
+        allChatUsersDropdown.style.display = "none"
         openChannel(channel_id)
     }
 
@@ -156,18 +155,33 @@ import { afterUpdate } from 'svelte';
     //Getting the previous opened channel id if it exist in storage
     if (localStorage.getItem('lastOpenedChannel')){
         lastOpenedChannelId = localStorage.getItem('lastOpenedChannel')
+        // console.log(lastOpenedChannelId)
     }
 
-    $: if ($channels != null && lastOpenedChannelId != null) {
+    $:if ($channels != null && lastOpenedChannelId != null) {
         // If the user is part of any channel and has selected a 
         // chat previous that is still logged in local storage
         // open that previous channel when page loads
-        openChannel(lastOpenedChannelId)
+        openLastOpenedChannel()
+
     } else if ($channels != null && lastOpenedChannelId == null) {
         // Else if there is no previous opened channel logged,
         // open the "first" channel
-        // openChannel($channels[0].id)
+        openChannel($channels[0].id)
+        console.log("I run now");
         console.log($channels)
+    }
+
+    const openLastOpenedChannel = () => {
+        for (let i = 0; i < $channels.length; i++){
+            if($channels[i].id == lastOpenedChannelId){
+                openChannel(lastOpenedChannelId)
+                console.log("I run now");
+                return
+            }
+        }
+        openChannel($channels[0].id)
+        console.log("I run now");
     }
 
     let dbUser = null
@@ -197,15 +211,18 @@ import { afterUpdate } from 'svelte';
 
     let currentHighestZindex = 0
 
-    let dropdown
-    let dropdownWidth
-
-    let open = false
+    let allChatUsersDropdown
+    let allChatUsersDropdownWidth
+    let allChatUsersOpen = false
+    let allChatUsersButton
+    
+    let chatSettinsDropdown
+    let chatSettinsDropdownWidth
+    let chatSettinsOpen = false
+    let chatSettinsIcon
 
     const calcCenter = (target, elem, size) => {
-
-        console.log(dropdownWidth)
-
+        // console.log(elem, target, size)
         let leftPX = ((target.offsetWidth / 2) - (size / 2) + target.offsetLeft)
         let topPX = target.offsetTop + target.offsetHeight + 5
 
@@ -213,56 +230,197 @@ import { afterUpdate } from 'svelte';
         elem.style.top = topPX + "px"
     }
 
-    const openUserList = (event) => {
-        if(open == true) {
-            dropdown.style.display = "none";
-            dropdown.style.zIndex = currentHighestZindex - 1
+    const openUsersDropdown = () => {
+        if(allChatUsersOpen == true) {
+            allChatUsersDropdown.style.display = "none";
+            allChatUsersDropdown.style.zIndex = currentHighestZindex - 1
             currentHighestZindex -= 1
-            open = false
+            allChatUsersOpen = false
             return
         }
-        
-        dropdown.style.display = "block";
-        dropdown.style.zIndex = currentHighestZindex + 1
+
+        allChatUsersDropdown.style.display = "block";
+        allChatUsersDropdown.style.zIndex = currentHighestZindex + 1
         currentHighestZindex += 1
 
-        if(dropdownWidth == 0) {
+        if(allChatUsersDropdownWidth == 0) {
             setTimeout(() => { 
-
-                console.log(dropdownWidth)
-                if(event.target.className.includes("curC-users")) {
-                    console.log("Clicked the div")
-                    calcCenter(event.target, dropdown, dropdownWidth)
-                } else if (event.target.parentNode.className.includes("curC-users")) {
-                    calcCenter(event.target.parentNode, dropdown, dropdownWidth)
-                } else if (event.target.parentNode.parentNode.className.includes("curC-users")) {
-                    calcCenter(event.target.parentNode.parentNode, dropdown, dropdownWidth)
-                }
-
-                
-
+                calcCenter(allChatUsersButton, allChatUsersDropdown, allChatUsersDropdownWidth)
             }, 100)
+        } else {
+            calcCenter(allChatUsersButton, allChatUsersDropdown, allChatUsersDropdownWidth)
         }
-        open = true
+        allChatUsersOpen = true
+    }
+
+    const openChatSettingsDropdown = () => {
+        if(chatSettinsOpen == true) {
+            chatSettinsDropdown.style.display = "none";
+            chatSettinsDropdown.style.zIndex = currentHighestZindex - 1
+            currentHighestZindex -= 1
+            chatSettinsOpen = false
+            return
+        }
+
+        chatSettinsDropdown.style.display = "block";
+        chatSettinsDropdown.style.zIndex = currentHighestZindex + 1
+        currentHighestZindex += 1
+
+
+        if(chatSettinsDropdownWidth == 0) {
+            setTimeout(() => { 
+                calcCenter(chatSettinsIcon, chatSettinsDropdown, chatSettinsDropdownWidth)
+            }, 100)
+        } else {
+            calcCenter(chatSettinsIcon, chatSettinsDropdown, chatSettinsDropdownWidth)
+        }
+        chatSettinsOpen = true
     }
 
     getCurrentDBUser(currentUser.id)
 
-    
+
+    const clientResize = () => {
+        if(allChatUsersOpen == true) {
+            calcCenter(allChatUsersButton, allChatUsersDropdown, allChatUsersDropdownWidth)
+        }
+        if(chatSettinsOpen == true) {
+            calcCenter(chatSettinsIcon, chatSettinsDropdown, chatSettinsDropdownWidth)
+        }
+        // console.log("no resize")
+    }
+    window.onresize = clientResize
+
+    let addUserModal
+
+    const openAddUserModal = () => {
+        addUserModal.style.display = "block"
+    }
+    const closeAddUserModal = (e) => {
+        console.log(e.target.nodeName)
+        if((e.target.nodeName != "path" && e.target.nodeName != "svg") && e.target.className.includes("modal-background")){
+            addUserModal.style.display = "none"
+        }
+    }
+
+    let removeUserModal
+
+    const openRemoveUserModal = () => {
+        removeUserModal.style.display = "block"
+    }
+    const closeRemoveUserModal = (e) => {
+        console.log(e.target.nodeName)
+        if((e.target.nodeName != "path" && e.target.nodeName != "svg") && e.target.className.includes("modal-background")){
+            removeUserModal.style.display = "none"
+        }
+    }
+
+    let areYouSurePrompt
+    let areYouSureText
+
+    const openAreYouSurePrompt = (text) => {
+        areYouSureText = text
+        areYouSurePrompt.style.display = "block"
+    }
+    const closeAreYouSurePrompt = (e) => {
+        if (e.target.className.includes("modal-background")){
+            areYouSurePrompt.style.display = "none"
+        }
+    }
+    const yesDeleteChannel = () => {
+        deleteChannel($currentChannel.id, $currentChannel.created_by, currentUser.id)
+        areYouSurePrompt.style.display = "none"
+        chatSettinsDropdown.style.display = "none"
+        $currentChannel = false
+    }
+
 
 </script>
 
 
 <div class="chat-page">
-    <div class="select-users" bind:offsetWidth={dropdownWidth} bind:this={dropdown}>
-        {#each $allUsers as user (user.id)}
-        {#if $currentChannel.allowed_users != null && $currentChannel.allowed_users.includes(user.id) || $currentChannel.created_by == user.id}
-            <div class="chat-user">
-                <img class="chat-avatar" src="{user.userdata.avatar_url}" alt="channel user avatar">
-                <p>{truncateString(user.userdata.full_name, 20)}</p>
-            </div>
-        {/if}
+    <div class="all-chat-users-dropdown" bind:offsetWidth={allChatUsersDropdownWidth} bind:this={allChatUsersDropdown}>
+        <h4>Chattrummets användare</h4>
+    {#each $allUsers as user (user.id)}
+    {#if $currentChannel != false && $currentChannel.allowed_users != null && ($currentChannel.allowed_users.includes(user.id) || $currentChannel.created_by == user.id)}
+        <div class="chat-user">
+            <img class="chat-avatar" src="{user.userdata.avatar_url}" alt="channel user avatar">
+            <p>{truncateString(user.userdata.full_name, 20)}</p>
+        </div>
+    {/if}
     {/each}
+    </div>
+    <div class="chat-settings-dropdown" bind:offsetWidth={chatSettinsDropdownWidth} bind:this={chatSettinsDropdown}>
+        <h4>Inställningar</h4>
+        <div class="line"></div>
+        <p class="setting-text" on:click={() => updateAChannelName($currentChannel.channel_name, $currentChannel.id, $currentChannel.created_by, currentUser.id)}>Ändra namn</p>
+        <div class="line"></div>
+        <p class="setting-text" on:click={() => openAddUserModal()}>Lägg till användare</p>
+        <div class="line"></div>
+        <p class="setting-text" on:click={() => openRemoveUserModal()}>Ta bort användare</p>
+        <div class="line"></div>
+        <p class="setting-text warning" on:click={() => openAreYouSurePrompt(`radera chattrummet: ${$currentChannel.channel_name}`)}>Radera detta chattrum</p>
+    </div>
+    <div class="modal-background" bind:this={addUserModal} on:click={(e) => closeAddUserModal(e)}>
+        <div class="users-modal-content">
+            <div class="text-close">
+                <h3>Klicka på ett plus för att lägga till en användare.</h3>
+                <div class="close-icon" on:click={() => addUserModal.style.display = "none"}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1490 1322q0 40-28 68l-136 136q-28 28-68 28t-68-28l-294-294-294 294q-28 28-68 28t-68-28l-136-136q-28-28-28-68t28-68l294-294-294-294q-28-28-28-68t28-68l136-136q28-28 68-28t68 28l294 294 294-294q28-28 68-28t68 28l136 136q28 28 28 68t-28 68l-294 294 294 294q28 28 28 68z"/></svg>
+                </div>
+            </div>
+            <div class="users-list">
+                {#each $allUsers as user (user.id)}
+                {#if $currentChannel.allowed_users == null || !$currentChannel.allowed_users.includes(user.id)}
+                {#if $currentChannel.created_by != user.id}
+                <div class="chat-user">
+                    <img class="chat-avatar" src="{user.userdata.avatar_url}" alt="channel user avatar">
+                    <p>{truncateString(user.userdata.full_name, 20)}</p>
+                    <div class="plus-icon" on:click={(e) => addAUserToChannel($currentChannel.id, user.id)}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1600 736v192q0 40-28 68t-68 28h-416v416q0 40-28 68t-68 28h-192q-40 0-68-28t-28-68v-416h-416q-40 0-68-28t-28-68v-192q0-40 28-68t68-28h416v-416q0-40 28-68t68-28h192q40 0 68 28t28 68v416h416q40 0 68 28t28 68z"/></svg>
+                    </div>
+                </div>
+                {/if}
+                {/if}
+                {/each}
+            </div>
+        </div>
+    </div>
+    <div class="modal-background" bind:this={removeUserModal} on:click={(e) => closeRemoveUserModal(e)}>
+        <div class="users-modal-content">
+            <div class="text-close">
+                <h3>Klicka på ett minus för att ta bort en användare.</h3>
+                <div class="close-icon" on:click={() => removeUserModal.style.display = "none"}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1490 1322q0 40-28 68l-136 136q-28 28-68 28t-68-28l-294-294-294 294q-28 28-68 28t-68-28l-136-136q-28-28-28-68t28-68l294-294-294-294q-28-28-28-68t28-68l136-136q28-28 68-28t68 28l294 294 294-294q28-28 68-28t68 28l136 136q28 28 28 68t-28 68l-294 294 294 294q28 28 28 68z"/></svg>
+                </div>
+            </div>
+            <div class="users-list">
+                {#if $currentChannel.allowed_users != null}
+                {#each $allUsers as user (user.id)}
+                {#if $currentChannel.allowed_users.includes(user.id)}
+                {#if $currentChannel.created_by != user.id}
+                <div class="chat-user">
+                    <img class="chat-avatar" src="{user.userdata.avatar_url}" alt="channel user avatar">
+                    <p>{truncateString(user.userdata.full_name, 20)}</p>
+                    <div class="plus-icon" on:click={(e) => removeAUserfromChannel($currentChannel.id, user.id)}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1600 736v192q0 40-28 68t-68 28h-1216q-40 0-68-28t-28-68v-192q0-40 28-68t68-28h1216q40 0 68 28t28 68z"/></svg>
+                    </div>
+                </div>
+                {/if}
+                {/if}
+                {/each}
+                {/if}
+            </div>
+        </div>
+    </div>
+    <div class="modal-background" bind:this={areYouSurePrompt} on:click={(e) => closeAreYouSurePrompt(e)}>
+        <div class="prompt-modal-content">
+            <h3>Är du säker på att du vill {areYouSureText} ?</h3>
+            <div class="buttons">
+                <button class="yes-button button" on:click={() => yesDeleteChannel()}>JA</button>
+                <button class="no-button button" on:click={() => areYouSurePrompt.style.display = "none"}>NEJ</button>
+            </div>
+        </div>
     </div>
     <nav class="navbar">
         <svg xmlns="http://www.w3.org/2000/svg" width="112" height="30" viewBox="0 0 112 30" fill="none">
@@ -334,11 +492,9 @@ import { afterUpdate } from 'svelte';
                 <div class="curC-nav">
                     <div class="curC-info">
                         <h3 class="curC-name">{$currentChannel.channel_name}</h3>
-                        <!-- <div class="setting-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1152 896q0-106-75-181t-181-75-181 75-75 181 75 181 181 75 181-75 75-181zm512-109v222q0 12-8 23t-20 13l-185 28q-19 54-39 91 35 50 107 138 10 12 10 25t-9 23q-27 37-99 108t-94 71q-12 0-26-9l-138-108q-44 23-91 38-16 136-29 186-7 28-36 28h-222q-14 0-24.5-8.5t-11.5-21.5l-28-184q-49-16-90-37l-141 107q-10 9-25 9-14 0-25-11-126-114-165-168-7-10-7-23 0-12 8-23 15-21 51-66.5t54-70.5q-27-50-41-99l-183-27q-13-2-21-12.5t-8-23.5v-222q0-12 8-23t19-13l186-28q14-46 39-92-40-57-107-138-10-12-10-24 0-10 9-23 26-36 98.5-107.5t94.5-71.5q13 0 26 10l138 107q44-23 91-38 16-136 29-186 7-28 36-28h222q14 0 24.5 8.5t11.5 21.5l28 184q49 16 90 37l142-107q9-9 24-9 13 0 25 10 129 119 165 170 7 8 7 22 0 12-8 23-15 21-51 66.5t-54 70.5q26 50 41 98l183 28q13 2 21 12.5t8 23.5z"/></svg>
-                        </div> -->
-                        <div class="curC-users" 
-                            on:click={(e) => openUserList(e)}
+                        <div class="curC-users"
+                        bind:this={allChatUsersButton} 
+                            on:click={(e) => openUsersDropdown(e)}
                         >
                             <div class="user-avatars">
                                 {#each $allUsers as user (user.id)}
@@ -354,6 +510,11 @@ import { afterUpdate } from 'svelte';
                                 <p class="user-nums">1</p>
                             {/if}
                         </div>
+                        {#if $currentChannel.created_by == currentUser.id}
+                        <div class="setting-icon" bind:this={chatSettinsIcon} on:click={(e) => openChatSettingsDropdown(e)}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1152 896q0-106-75-181t-181-75-181 75-75 181 75 181 181 75 181-75 75-181zm512-109v222q0 12-8 23t-20 13l-185 28q-19 54-39 91 35 50 107 138 10 12 10 25t-9 23q-27 37-99 108t-94 71q-12 0-26-9l-138-108q-44 23-91 38-16 136-29 186-7 28-36 28h-222q-14 0-24.5-8.5t-11.5-21.5l-28-184q-49-16-90-37l-141 107q-10 9-25 9-14 0-25-11-126-114-165-168-7-10-7-23 0-12 8-23 15-21 51-66.5t54-70.5q-27-50-41-99l-183-27q-13-2-21-12.5t-8-23.5v-222q0-12 8-23t19-13l186-28q14-46 39-92-40-57-107-138-10-12-10-24 0-10 9-23 26-36 98.5-107.5t94.5-71.5q13 0 26 10l138 107q44-23 91-38 16-136 29-186 7-28 36-28h222q14 0 24.5 8.5t11.5 21.5l28 184q49 16 90 37l142-107q9-9 24-9 13 0 25 10 129 119 165 170 7 8 7 22 0 12-8 23-15 21-51 66.5t-54 70.5q26 50 41 98l183 28q13 2 21 12.5t8 23.5z"/></svg>
+                        </div>
+                        {/if}
                     </div>
                     <div class="curC-search">
                         <input type="text">
@@ -487,6 +648,30 @@ import { afterUpdate } from 'svelte';
         background: #090F42;
     }
 
+    .button {
+        height: 40px;
+        border-radius: 10px;
+        padding: 0px 10px;
+        margin-right: 20px;
+        min-width: 50px;
+    }
+    .button:hover {
+        cursor: pointer;
+        background-color: rgba(0,0,0,0.04); 
+        box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
+    }
+    .button:focus {
+        cursor: pointer;
+        background-color: rgba(0,0,0,0.12); 
+        box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
+    }
+    .button:active {
+        cursor: pointer;
+        border-color: #bababa;
+        background-color: rgba(0,0,0,0.12); 
+        box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
+    }
+
     .add-chat-section {
         height: 60px;
         background: #070B32;
@@ -500,6 +685,7 @@ import { afterUpdate } from 'svelte';
         width: 20px;
         height: 20px;
         padding: 10px;
+        margin-bottom: -4px;
         color: inherit;
     }
     .plus-icon:hover {
@@ -546,6 +732,7 @@ import { afterUpdate } from 'svelte';
 
     .channel-icon {
         min-width: 40px;
+        max-width: 40px;
         height: 40px;
         background: white;
         border-radius: 5px;
@@ -559,6 +746,7 @@ import { afterUpdate } from 'svelte';
         min-width: 20px;
         height: 20px;
         color: inherit;
+        padding: 10px;
     }
     .setting-icon:hover {
         color: rgba(255, 255, 255, 0.6);
@@ -567,9 +755,6 @@ import { afterUpdate } from 'svelte';
     .setting-icon:active {
         color: rgba(255, 255, 255, 0.8);
         cursor: pointer;
-    }
-    .setting-icon svg {
-        padding: 10px;
     }
 
     .profile-container {
@@ -598,7 +783,7 @@ import { afterUpdate } from 'svelte';
 
     .current-user-avatar {
         width: 40px;
-        border-radius: 50%;
+        border-radius: 50px;
         margin-right: 10px;
     }
 
@@ -635,7 +820,7 @@ import { afterUpdate } from 'svelte';
         cursor: pointer;
     }
 
-    .select-users {
+    .all-chat-users-dropdown {
         position: absolute;
         border: 1px solid #BBBBBB;
         background: #f3f3f3;
@@ -644,14 +829,133 @@ import { afterUpdate } from 'svelte';
         top: -20000px;
         padding: 10px 10px 5px 10px;
     }
-
-    .select-users img {
+    .all-chat-users-dropdown img {
         margin-right: 5px;
+    }
+    .all-chat-users-dropdown h4 {
+        margin-bottom: 5px;
     }
 
     .chat-user {
         display: flex;
+        align-items: center;
         margin-bottom: 5px;
+    }
+
+    .chat-settings-dropdown {
+        position: absolute;
+        border: 1px solid #BBBBBB;
+        background: #f3f3f3;
+        border-radius: 5px;
+        display: none; 
+        top: -20000px;
+        padding-top: 5px;
+    }
+    .chat-settings-dropdown .setting-text, h4 {
+        padding: 2.5px 10px;
+    }
+    .chat-settings-dropdown .setting-text:hover {
+        background: rgba(0,0,0,0.04); 
+        cursor: pointer;
+    }
+    .chat-settings-dropdown .setting-text:active {
+        background: rgba(0,0,0,0.12); 
+        cursor: pointer;
+    }
+    .chat-settings-dropdown .setting-text:focus {
+        background: rgba(0,0,0,0.12); 
+    }
+
+    .chat-settings-dropdown .line {
+        width: 100%;
+        background: #BBBBBB;
+        height: 1px;
+    }
+
+    .modal-background {
+        display: none; /* Hidden by default */
+        position: fixed;
+        z-index: 10; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    }
+    .users-modal-content {
+        background-color: #fefefe;
+        margin: 15% auto; /* 15% from the top and centered */
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%; /* Could be more or less, depending on screen size */
+        border-radius: 5px;
+    }
+    .users-modal-content .text-close {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+    }
+    .users-modal-content .close-icon {
+        color: #333;
+        min-width: 28px;
+        max-width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: start;
+        justify-content: center;
+    }
+    .users-modal-content .close-icon:hover {
+        color: rgba(0, 0, 0, 0.6);
+        cursor: pointer;
+    }
+    .users-modal-content .close-icon:active {
+        color: rgba(0, 0, 0, 0.8);
+        cursor: pointer;
+    }
+    .users-modal-content .close-icon:focus {
+        color: rgba(0, 0, 0, 0.8);
+    }
+
+    .users-modal-content .users-list {
+        height: 180px;
+        overflow-y: auto;
+    }
+    .users-modal-content .users-list img {
+        margin-right: 5px;
+    }
+
+    .prompt-modal-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-evenly;
+        background-color: #fefefe;
+        margin: 10% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 500px;
+        height: 200px;
+        border-radius: 5px;
+    }
+    .prompt-modal-content .buttons {
+        display: flex;
+        justify-content: space-evenly;
+        width: 100%;
+    }
+
+    .chat-user .plus-icon:hover {
+        color: rgba(0, 0, 0, 0.6);
+        cursor: pointer;
+    }
+    .chat-user .plus-icon:active {
+        color: rgba(0, 0, 0, 0.8);
+        cursor: pointer;
+    }
+    .chat-user .plus-icon:focus {
+        color: rgba(0, 0, 0, 0.8);
     }
 
     .curC-users {
@@ -691,10 +995,11 @@ import { afterUpdate } from 'svelte';
 
     .chat-avatar {
         min-width: 28px;
+        max-width: 28px;
         height: 28px;
         background: gray;
         border: 1px solid #ffffff;
-        border-radius: 50%;
+        border-radius: 50px;
         margin-right: -5px;
     }
 

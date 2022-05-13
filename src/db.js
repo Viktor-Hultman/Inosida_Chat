@@ -157,7 +157,7 @@ export const deleteChannel = async (channel_id, channel_user_id, user_id) => {
     return console.error(error);
   }
   //Updating the 'channels' store using filter method
-  channels.update((channels) => channels.filter((channel) => channel.id !== channel_id));
+  // channels.update((channels) => channels.filter((channel) => channel.id !== channel_id));
 }
 
 export const hideChannel = async (channel_id, channel_user_id, user_id, user_hidden_channels) => {
@@ -207,10 +207,11 @@ export const createChannel = async (name, user_id) => {
     return console.error(error);
   }
 
+
+  localStorage.setItem('lastOpenedChannel', data.id)
   currentChannel.set(data)
   getMessagesOfChannel(data.id)
-  localStorage.setItem('lastOpenedChannel', data.id)
-  loadChannels()
+  // loadChannels()
 }
 
 export const getChannelToAddUser = async (channel_id, user_id) => {
@@ -236,7 +237,7 @@ export const addUserToChannel = async (channel_id, user_id, allowedUsers) => {
   if(error){
     return console.error(error);
   }
-  loadChannels()
+  // loadChannels()
 }
 
 export const getChannelToRemoveUser = async (channel_id, user_id) => {
@@ -265,7 +266,7 @@ export const removeUserFromChannel = async (channel_id, user_id, allowedUsers) =
   if(error){
     return console.error(error);
   }
-  loadChannels()
+  // loadChannels()
 }
 
 export const openChannel = async (channel_id) => {
