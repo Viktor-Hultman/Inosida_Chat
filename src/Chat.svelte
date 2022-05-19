@@ -100,8 +100,10 @@ import { afterUpdate } from 'svelte';
     }
 
     const autoResize = (e) => {
-        e.target.style.height = 'auto';
-        e.target.style.height = e.target.scrollHeight + 'px';
+        // Måste fixa outo resize så att den ändrar höjden på inputfältet samt hela input containern
+        // Ska bara höjas uppåt och inte flyttas nedåt.
+        // e.target.style.height = 'auto';
+        // e.target.style.height = e.target.scrollHeight + 'px';
     }
 
     const checkInputVal = (e) => {
@@ -113,6 +115,7 @@ import { afterUpdate } from 'svelte';
     const regex = /[^\n]/;
 
     const submitOnEnter = (event, message, channel_id) => {
+        // Trim whitespace from end of message
         if(event.shiftKey && event.keyCode === 13){
             return console.log("Shift and enter is pressed")
         } else if (event.keyCode === 13 && regex.test(message)) {
@@ -136,7 +139,6 @@ import { afterUpdate } from 'svelte';
     }
 
     
-
 
     let messageContainer
     $: if($channelMessages) { //Checks for updates, and if channelMessages has changed then run the code
@@ -221,34 +223,51 @@ import { afterUpdate } from 'svelte';
     let chatSettinsOpen = false
     let chatSettinsIcon
 
-    const calcCenter = (target, elem, size) => {
-        // console.log(elem, target, size)
-        let leftPX = ((target.offsetWidth / 2) - (size / 2) + target.offsetLeft)
-        let topPX = target.offsetTop + target.offsetHeight + 5
+    let userSettingsPopup
+    let userSettingsPopupWidth
+    let userSettingsOpen = false
+    let userSettingsIcon
 
-        elem.style.left = leftPX + "px"
-        elem.style.top = topPX + "px"
+    const calcCenter = (target, elem, size, upOrDown) => {
+        // console.log(elem, target, size)
+        if(upOrDown == "down") {
+            let leftPX = ((target.offsetWidth / 2) - (size / 2) + target.offsetLeft)
+            let topPX = target.offsetTop + target.offsetHeight + 5
+
+            elem.style.left = leftPX + "px"
+            elem.style.top = topPX + "px"
+        }
+        if(upOrDown == "up") {
+            console.log("should popup");
+            let leftPX = ((target.offsetWidth / 2) - (size / 2) + target.offsetLeft)
+            let topPX = target.offsetTop + target.offsetHeight - 100 
+            // topPx för popups måste göras om, ska inte vara ett fast nummer
+            // måste uträkna höjden på popupen som ska beräknas minus på topPX
+            // ex. let topPX = target.offsetTop - target.offsetHeight - popup.height - 5px
+
+            elem.style.left = leftPX + "px"
+            elem.style.top = topPX + "px"
+        }
+
     }
 
     const openUsersDropdown = () => {
         if(allChatUsersOpen == true) {
             allChatUsersDropdown.style.display = "none";
-            allChatUsersDropdown.style.zIndex = currentHighestZindex - 1
-            currentHighestZindex -= 1
             allChatUsersOpen = false
             return
         }
 
         allChatUsersDropdown.style.display = "block";
         allChatUsersDropdown.style.zIndex = currentHighestZindex + 1
-        currentHighestZindex += 1
+        currentHighestZindex = allChatUsersDropdown.style.zIndex
 
         if(allChatUsersDropdownWidth == 0) {
             setTimeout(() => { 
-                calcCenter(allChatUsersButton, allChatUsersDropdown, allChatUsersDropdownWidth)
+                calcCenter(allChatUsersButton, allChatUsersDropdown, allChatUsersDropdownWidth, "down")
             }, 100)
         } else {
-            calcCenter(allChatUsersButton, allChatUsersDropdown, allChatUsersDropdownWidth)
+            calcCenter(allChatUsersButton, allChatUsersDropdown, allChatUsersDropdownWidth, "down")
         }
         allChatUsersOpen = true
     }
@@ -256,36 +275,61 @@ import { afterUpdate } from 'svelte';
     const openChatSettingsDropdown = () => {
         if(chatSettinsOpen == true) {
             chatSettinsDropdown.style.display = "none";
-            chatSettinsDropdown.style.zIndex = currentHighestZindex - 1
-            currentHighestZindex -= 1
             chatSettinsOpen = false
             return
         }
 
         chatSettinsDropdown.style.display = "block";
         chatSettinsDropdown.style.zIndex = currentHighestZindex + 1
-        currentHighestZindex += 1
-
+        currentHighestZindex = chatSettinsDropdown.style.zIndex
 
         if(chatSettinsDropdownWidth == 0) {
             setTimeout(() => { 
-                calcCenter(chatSettinsIcon, chatSettinsDropdown, chatSettinsDropdownWidth)
+                calcCenter(chatSettinsIcon, chatSettinsDropdown, chatSettinsDropdownWidth, "down")
             }, 100)
         } else {
-            calcCenter(chatSettinsIcon, chatSettinsDropdown, chatSettinsDropdownWidth)
+            calcCenter(chatSettinsIcon, chatSettinsDropdown, chatSettinsDropdownWidth, "down")
         }
         chatSettinsOpen = true
     }
 
+    const openUserSettingsPopup = () => {
+        if(userSettingsOpen == true) {
+            userSettingsPopup.style.display = "none";
+            userSettingsOpen = false
+            return
+        }
+
+        userSettingsPopup.style.display = "block";
+        userSettingsPopup.style.zIndex = currentHighestZindex + 1
+        currentHighestZindex = userSettingsPopup.style.zIndex
+
+        if(userSettingsPopupWidth == 0) {
+            setTimeout(() => { 
+                calcCenter(userSettingsIcon, userSettingsPopup, userSettingsPopupWidth, "up")
+            }, 100)
+        } else {
+            calcCenter(userSettingsIcon, userSettingsPopup, userSettingsPopupWidth, "up")
+        }
+        userSettingsOpen = true
+    }
+
     getCurrentDBUser(currentUser.id)
+
+    const signOut = async () => {
+		await db.signOut();
+	}
 
 
     const clientResize = () => {
         if(allChatUsersOpen == true) {
-            calcCenter(allChatUsersButton, allChatUsersDropdown, allChatUsersDropdownWidth)
+            calcCenter(allChatUsersButton, allChatUsersDropdown, allChatUsersDropdownWidth, "down")
         }
         if(chatSettinsOpen == true) {
-            calcCenter(chatSettinsIcon, chatSettinsDropdown, chatSettinsDropdownWidth)
+            calcCenter(chatSettinsIcon, chatSettinsDropdown, chatSettinsDropdownWidth, "down")
+        }
+        if(userSettingsOpen == true) {
+            calcCenter(userSettingsIcon, userSettingsPopup, userSettingsPopupWidth, "up")
         }
         // console.log("no resize")
     }
@@ -341,14 +385,14 @@ import { afterUpdate } from 'svelte';
 <div class="chat-page">
     <div class="all-chat-users-dropdown" bind:offsetWidth={allChatUsersDropdownWidth} bind:this={allChatUsersDropdown}>
         <h4>Chattrummets användare</h4>
-    {#each $allUsers as user (user.id)}
-    {#if $currentChannel != false && $currentChannel.allowed_users != null && ($currentChannel.allowed_users.includes(user.id) || $currentChannel.created_by == user.id)}
-        <div class="chat-user">
-            <img class="chat-avatar" src="{user.userdata.avatar_url}" alt="channel user avatar">
-            <p>{truncateString(user.userdata.full_name, 20)}</p>
-        </div>
-    {/if}
-    {/each}
+        {#each $allUsers as user (user.id)}
+        {#if $currentChannel != false && $currentChannel.allowed_users != null && ($currentChannel.allowed_users.includes(user.id) || $currentChannel.created_by == user.id)}
+            <div class="chat-user">
+                <img class="chat-avatar" src="{user.userdata.avatar_url}" alt="channel user avatar">
+                <p>{truncateString(user.userdata.full_name, 20)}</p>
+            </div>
+        {/if}
+        {/each}
     </div>
     <div class="chat-settings-dropdown" bind:offsetWidth={chatSettinsDropdownWidth} bind:this={chatSettinsDropdown}>
         <h4>Inställningar</h4>
@@ -360,6 +404,11 @@ import { afterUpdate } from 'svelte';
         <p class="setting-text" on:click={() => openRemoveUserModal()}>Ta bort användare</p>
         <div class="line"></div>
         <p class="setting-text warning" on:click={() => openAreYouSurePrompt(`radera chattrummet: ${$currentChannel.channel_name}`)}>Radera detta chattrum</p>
+    </div>
+    <div class="user-settings-popup" bind:offsetWidth={userSettingsPopupWidth} bind:this={userSettingsPopup}>
+        <p class="setting-text" on:click={() => openHideShowModal()}>Göm/visa chattrum</p>
+        <div class="line"></div>
+        <p class="setting-text" on:click={() => signOut()}>Logga ut</p>
     </div>
     <div class="modal-background" bind:this={addUserModal} on:click={(e) => closeAddUserModal(e)}>
         <div class="users-modal-content">
@@ -448,32 +497,32 @@ import { afterUpdate } from 'svelte';
                 {#if $channels != null}
                     {#each $channels as channel (channel.id)}
                         {#if dbUser && (dbUser.hidden_channels == null || !dbUser.hidden_channels.includes(channel.id))}
-                            <div class="channel" on:click={(e) => openAChannel(e, channel.id)}>
+                        {#if channel.id == $currentChannel.id}
+                            <div class="channel activeCurrentChannel" on:click={(e) => openAChannel(e, channel.id)}>
                                 <div class="channel-info">
-                                    <div class="channel-icon"></div>
+                                    <!-- <div class="channel-icon"></div> -->
                                     <p>{truncateString(channel.channel_name, 29)}</p>
                                 </div>
-                                <div class="setting-icon">
+                                <!-- <div class="setting-icon">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1152 896q0-106-75-181t-181-75-181 75-75 181 75 181 181 75 181-75 75-181zm512-109v222q0 12-8 23t-20 13l-185 28q-19 54-39 91 35 50 107 138 10 12 10 25t-9 23q-27 37-99 108t-94 71q-12 0-26-9l-138-108q-44 23-91 38-16 136-29 186-7 28-36 28h-222q-14 0-24.5-8.5t-11.5-21.5l-28-184q-49-16-90-37l-141 107q-10 9-25 9-14 0-25-11-126-114-165-168-7-10-7-23 0-12 8-23 15-21 51-66.5t54-70.5q-27-50-41-99l-183-27q-13-2-21-12.5t-8-23.5v-222q0-12 8-23t19-13l186-28q14-46 39-92-40-57-107-138-10-12-10-24 0-10 9-23 26-36 98.5-107.5t94.5-71.5q13 0 26 10l138 107q44-23 91-38 16-136 29-186 7-28 36-28h222q14 0 24.5 8.5t11.5 21.5l28 184q49 16 90 37l142-107q9-9 24-9 13 0 25 10 129 119 165 170 7 8 7 22 0 12-8 23-15 21-51 66.5t-54 70.5q26 50 41 98l183 28q13 2 21 12.5t8 23.5z"/></svg>
+                                </div> -->
+                                    <!-- <button on:click={() => hideAChannel(channel.id, channel.created_by, dbUser.id, dbUser.hidden_channels)}>Leave Channel</button> -->
+                            </div>
+                        {:else}
+                            <div class="channel" on:click={(e) => openAChannel(e, channel.id)}>
+                                <div class="channel-info">
+                                    <!-- <div class="channel-icon"></div> -->
+                                    <p>{truncateString(channel.channel_name, 29)}</p>
                                 </div>
-                                <!-- <p>{channel.allowed_users}</p> -->
-                                <!-- {#if channel.created_by == currentUser.id}
-                                    <button on:click={() => addAUserToChannel(channel.id)}>Add User</button>
-                                    <button on:click={() => removeAUserfromChannel(channel.id)}>Remove User</button>
-                                    <button on:click={() => updateAChannelName(channel.channel_name, channel.id, channel.created_by, currentUser.id)}>Update</button>
-                                    <button on:click={() => deleteChannel(channel.id, channel.created_by, currentUser.id)}>Delete</button>
-                                {:else}
-                                    <button on:click={() => hideAChannel(channel.id, channel.created_by, dbUser.id, dbUser.hidden_channels)}>Leave Channel</button>
-                                {/if} -->
                             </div>
                         {/if}
+                        {/if}
                     {:else}
-                        <p>You are currently not part of any channels</p>
+                        <p>Du är för tillfället inte med i några chattrum.</p>
                     {/each}
                 {:else} 
-                    <p>Loading...</p>
+                    <p>Laddar in chattrum...</p>
                 {/if}
-                
             </div>
             <div class="profile-container">
                 <div class="profile">
@@ -481,7 +530,7 @@ import { afterUpdate } from 'svelte';
                         <img class="current-user-avatar" src="{currentUser.user_metadata.avatar_url}" alt="current user avatar">
                         <p>{truncateString(currentUser.user_metadata.full_name, 29)}</p>
                     </div>
-                    <div class="setting-icon">
+                    <div class="setting-icon" bind:this={userSettingsIcon} on:click={(e) => openUserSettingsPopup(e)}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1152 896q0-106-75-181t-181-75-181 75-75 181 75 181 181 75 181-75 75-181zm512-109v222q0 12-8 23t-20 13l-185 28q-19 54-39 91 35 50 107 138 10 12 10 25t-9 23q-27 37-99 108t-94 71q-12 0-26-9l-138-108q-44 23-91 38-16 136-29 186-7 28-36 28h-222q-14 0-24.5-8.5t-11.5-21.5l-28-184q-49-16-90-37l-141 107q-10 9-25 9-14 0-25-11-126-114-165-168-7-10-7-23 0-12 8-23 15-21 51-66.5t54-70.5q-27-50-41-99l-183-27q-13-2-21-12.5t-8-23.5v-222q0-12 8-23t19-13l186-28q14-46 39-92-40-57-107-138-10-12-10-24 0-10 9-23 26-36 98.5-107.5t94.5-71.5q13 0 26 10l138 107q44-23 91-38 16-136 29-186 7-28 36-28h222q14 0 24.5 8.5t11.5 21.5l28 184q49 16 90 37l142-107q9-9 24-9 13 0 25 10 129 119 165 170 7 8 7 22 0 12-8 23-15 21-51 66.5t-54 70.5q26 50 41 98l183 28q13 2 21 12.5t8 23.5z"/></svg>
                     </div>
                 </div>
@@ -589,592 +638,4 @@ import { afterUpdate } from 'svelte';
             {/if}
         </div>
     </div>
-    <!-- 
-    {#if $currentChannel}
-        <h1>{$currentChannel.channel_name}</h1>
-    
-        <h3>Messages:</h3>
-        <div class="message-container" bind:this={messageContainer}>
-            {#each $channelMessages as message (message.id)}
-                <div>
-                    <span><img src="{message.user_id.userdata.avatar_url}" alt="profile" width="40px"></span> <span>{message.user_id.userdata.name}</span><span>{getDate(message.inserted_at)}</span>
-                    <br>
-                    <pre>{message.message}</pre>
-                    {#if message.edited}
-                        <span>(edited)</span>
-                    {/if}
-                    {#if message.user_id.id == currentUser.id}
-                        <button on:click={() => updateAMessage(message.message, message.id, message.user_id.id, currentUser.id)}>Update</button>
-                        <button on:click={() => deleteMessage(message.id, message.user_id.id, currentUser.id)}>Delete</button>
-                    {/if}
-                </div>
-                <br>
-            {/each}
-            
-        </div>
-    {/if} -->
-
 </div>
-
-
-<style>
-    .chat-page {
-        height: 100%;
-        width: 100%;
-        overflow: hidden;
-    }
-
-    .navbar {
-        background: #2D3262;
-        height: 60px;
-        width: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .content {
-        display: flex;
-        height:calc(100% - 60px);
-        width: 100%;
-    }
-
-    .sidebar {
-        display: flex;
-        flex-direction: column;
-        /* justify-content: space-between; */
-        height: 100%;
-        width: 300px;
-        background: #090F42;
-    }
-
-    .button {
-        height: 40px;
-        border-radius: 10px;
-        padding: 0px 10px;
-        margin-right: 20px;
-        min-width: 50px;
-    }
-    .button:hover {
-        cursor: pointer;
-        background-color: rgba(0,0,0,0.04); 
-        box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
-    }
-    .button:focus {
-        cursor: pointer;
-        background-color: rgba(0,0,0,0.12); 
-        box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
-    }
-    .button:active {
-        cursor: pointer;
-        border-color: #bababa;
-        background-color: rgba(0,0,0,0.12); 
-        box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
-    }
-
-    .add-chat-section {
-        height: 60px;
-        background: #070B32;
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: space-around;
-    }
-    
-    .plus-icon {
-        width: 20px;
-        height: 20px;
-        padding: 10px;
-        margin-bottom: -4px;
-        color: inherit;
-    }
-    .plus-icon:hover {
-        color: rgba(255, 255, 255, 0.6);
-        cursor: pointer;
-    }
-    .plus-icon:active {
-        color: rgba(255, 255, 255, 0.8);
-        cursor: pointer;
-    }
-
-    .channels-container {
-        height:calc(100% - 150px);
-        overflow-y: auto;
-        color: white;
-    }
-
-    .channel {
-        height: 50px;
-        margin: 5px 0px 5px 0px;
-        padding: 0px 10px 0px 20px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-    .channel:hover {
-        cursor: pointer;
-        background-color: rgba(0,0,0,0.12); 
-    }
-    .channel:focus {
-        cursor: pointer;
-        background-color: rgba(0,0,0,0.12); 
-    }
-    .channel:active {
-        cursor: pointer;
-        background-color: rgba(0,0,0,0.20); 
-    }
-
-    .channel-info {
-        display: flex;
-        align-items: center;
-        padding: 2px 5px 2px 5px;
-    }
-
-    .channel-icon {
-        min-width: 40px;
-        max-width: 40px;
-        height: 40px;
-        background: white;
-        border-radius: 5px;
-        margin-right: 10px;
-    }
-
-    .setting-icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 20px;
-        height: 20px;
-        color: inherit;
-        padding: 10px;
-    }
-    .setting-icon:hover {
-        color: rgba(255, 255, 255, 0.6);
-        cursor: pointer;
-    }
-    .setting-icon:active {
-        color: rgba(255, 255, 255, 0.8);
-        cursor: pointer;
-    }
-
-    .profile-container {
-        height: 90px;
-        width: 100%;
-        background: #070B32;
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .profile {
-        max-width: 80%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .profile-info {
-        display: flex;
-        color: white;
-        display: flex;
-        align-items: center;
-    }
-
-    .current-user-avatar {
-        width: 40px;
-        border-radius: 50px;
-        margin-right: 10px;
-    }
-
-    .curC {
-        height: 100%;
-        width:calc(100% - 300px);
-        background: white;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .curC-nav {
-        background: #f3f3f3;
-        min-height: 58px;
-        border-bottom: 2px solid #dedede;
-        padding: 0px 20px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .curC-info {
-        display: flex;
-        align-items: center;
-    }
-
-    .curC-info .setting-icon:hover {
-        color: rgba(0, 0, 0, 0.6);
-        cursor: pointer;
-    }
-
-    .curC-info .setting-icon:active {
-        color: rgba(0, 0, 0, 0.8);
-        cursor: pointer;
-    }
-
-    .all-chat-users-dropdown {
-        position: absolute;
-        border: 1px solid #BBBBBB;
-        background: #f3f3f3;
-        border-radius: 5px;
-        display: none; 
-        top: -20000px;
-        padding: 10px 10px 5px 10px;
-    }
-    .all-chat-users-dropdown img {
-        margin-right: 5px;
-    }
-    .all-chat-users-dropdown h4 {
-        margin-bottom: 5px;
-    }
-
-    .chat-user {
-        display: flex;
-        align-items: center;
-        margin-bottom: 5px;
-    }
-
-    .chat-settings-dropdown {
-        position: absolute;
-        border: 1px solid #BBBBBB;
-        background: #f3f3f3;
-        border-radius: 5px;
-        display: none; 
-        top: -20000px;
-        padding-top: 5px;
-    }
-    .chat-settings-dropdown .setting-text, h4 {
-        padding: 2.5px 10px;
-    }
-    .chat-settings-dropdown .setting-text:hover {
-        background: rgba(0,0,0,0.04); 
-        cursor: pointer;
-    }
-    .chat-settings-dropdown .setting-text:active {
-        background: rgba(0,0,0,0.12); 
-        cursor: pointer;
-    }
-    .chat-settings-dropdown .setting-text:focus {
-        background: rgba(0,0,0,0.12); 
-    }
-
-    .chat-settings-dropdown .line {
-        width: 100%;
-        background: #BBBBBB;
-        height: 1px;
-    }
-
-    .modal-background {
-        display: none; /* Hidden by default */
-        position: fixed;
-        z-index: 10; /* Sit on top */
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-        background-color: rgb(0,0,0); /* Fallback color */
-        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-    }
-    .users-modal-content {
-        background-color: #fefefe;
-        margin: 15% auto; /* 15% from the top and centered */
-        padding: 20px;
-        border: 1px solid #888;
-        width: 80%; /* Could be more or less, depending on screen size */
-        border-radius: 5px;
-    }
-    .users-modal-content .text-close {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 10px;
-    }
-    .users-modal-content .close-icon {
-        color: #333;
-        min-width: 28px;
-        max-width: 28px;
-        height: 28px;
-        display: flex;
-        align-items: start;
-        justify-content: center;
-    }
-    .users-modal-content .close-icon:hover {
-        color: rgba(0, 0, 0, 0.6);
-        cursor: pointer;
-    }
-    .users-modal-content .close-icon:active {
-        color: rgba(0, 0, 0, 0.8);
-        cursor: pointer;
-    }
-    .users-modal-content .close-icon:focus {
-        color: rgba(0, 0, 0, 0.8);
-    }
-
-    .users-modal-content .users-list {
-        height: 180px;
-        overflow-y: auto;
-    }
-    .users-modal-content .users-list img {
-        margin-right: 5px;
-    }
-
-    .prompt-modal-content {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: space-evenly;
-        background-color: #fefefe;
-        margin: 10% auto;
-        padding: 20px;
-        border: 1px solid #888;
-        width: 500px;
-        height: 200px;
-        border-radius: 5px;
-    }
-    .prompt-modal-content .buttons {
-        display: flex;
-        justify-content: space-evenly;
-        width: 100%;
-    }
-
-    .chat-user .plus-icon:hover {
-        color: rgba(0, 0, 0, 0.6);
-        cursor: pointer;
-    }
-    .chat-user .plus-icon:active {
-        color: rgba(0, 0, 0, 0.8);
-        cursor: pointer;
-    }
-    .chat-user .plus-icon:focus {
-        color: rgba(0, 0, 0, 0.8);
-    }
-
-    .curC-users {
-        min-width: 30px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background: #f3f3f3;
-        border: 1px solid #BBBBBB;
-        border-radius: 5px;
-        padding: 4px;
-        margin-left: 20px;
-    }
-
-    .curC-users:hover {
-        cursor: pointer;
-        background-color: rgba(0,0,0,0.04); 
-        box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
-    }
-
-    .curC-users:focus {
-        cursor: pointer;
-        background-color: rgba(0,0,0,0.12); 
-        box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
-    }
-
-    .curC-users:active {
-        cursor: pointer;
-        background-color: rgba(0,0,0,0.12); 
-        box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
-    }
-
-    .user-avatars {
-        display: flex;
-        flex-direction: row-reverse;
-    }
-
-    .chat-avatar {
-        min-width: 28px;
-        max-width: 28px;
-        height: 28px;
-        background: gray;
-        border: 1px solid #ffffff;
-        border-radius: 50px;
-        margin-right: -5px;
-    }
-
-    .user-nums {
-        margin-left: 13px;
-    }
-
-    .chat {
-        height:calc(100% - 150px);
-        max-width: 100%;
-        overflow-y: auto;
-        overflow-x: hidden;
-        padding: 20px 0px;
-    }
-
-    .message {
-        padding: 5px 20px 5px 20px;
-        max-width: 100%;
-        display: flex;
-        align-items: flex-start;
-        margin-bottom: 10px;
-    }
-
-    .message:hover {
-        background-color: rgba(0,0,0,0.04); 
-    }
-
-    .message-avatar {
-        width: 40px;
-        border-radius: 50%;
-        margin-right: 15px;
-    }
-
-    .message-data {
-        display: flex;
-        align-items: baseline;
-    }
-
-    .message-name {
-        margin-right: 5px;
-    }
-
-    .message-date {
-        font-size: 14px;
-        margin-right: 5px;
-    }
-    
-    .edited-text {
-        font-size: 12px;
-        align-self: flex-start;
-    }
-
-    .chat-input-container {
-        min-height: 88px;
-        background: #f3f3f3;
-        border-top: 2px solid #dedede;
-        padding: 0px 20px;
-    }
-
-    .input-formats {
-        display: flex;
-        margin: 5px 0px;
-    }
-
-    .format-icon {
-        min-width: 24px;
-        height: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        fill: #333;
-        margin-right: 12px;
-        border-radius: 5px;
-    }
-    .format-icon:hover {
-        cursor: pointer;
-        background: rgba(0,0,0,0.12);
-    }
-
-    .input-and-buttons {
-        display: flex;
-        align-items: center;
-    }
-
-    .message-input-field {
-        width: calc(100% - 200px);
-        height: 40px;
-        resize: none;
-        border-radius: 5px;
-        padding: 10px;
-    }
-
-    .message-buttons {
-        width: 200px;
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-    }
-    
-    .send-button {
-        background-color: #38394A;
-        color: #DEDEDE;
-        height: 40px;
-        border-radius: 10px;
-        padding: 0px 10px;
-        margin-right: 20px;
-    }
-
-    .send-button-active {
-        background-color: #000852;
-        color: #fff;
-    }
-    .send-button-active:hover {
-        cursor: pointer;
-        background-color: #000a56;
-        box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
-    }
-    .send-button-active:focus {
-        cursor: pointer;
-        background-color: #000c65;
-        box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
-    }
-    .send-button-active:active {
-        cursor: pointer;
-        border-color: #bababa;
-        background-color: #000c65;
-        box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
-    }
-
-    .time-button {
-        background-color: #fff;
-        color: #333;
-        height: 40px;
-        border-radius: 10px;
-        padding: 0px 10px;
-    }
-    .time-button:hover {
-        cursor: pointer;
-        background-color: rgba(0,0,0,0.04); 
-        box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
-    }
-    .time-button:focus {
-        cursor: pointer;
-        background-color: rgba(0,0,0,0.12); 
-        box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
-    }
-    .time-button:active {
-        cursor: pointer;
-        border-color: #bababa;
-        background-color: rgba(0,0,0,0.12); 
-        box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
-    }
-
-    pre {
-        font-family: inherit;
-        white-space: pre-wrap;       /* Since CSS 2.1 */
-        white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
-        white-space: -pre-wrap;      /* Opera 4-6 */
-        white-space: -o-pre-wrap;    /* Opera 7 */
-        word-wrap: break-word;
-    }
-
-
-    @media (max-width: 768px) {
-        .sidebar {
-            display: none;
-        }
-
-        .curC {
-            width: 100%;
-        }
-
-        .chat {
-            
-        }
-    }
-    
-</style>

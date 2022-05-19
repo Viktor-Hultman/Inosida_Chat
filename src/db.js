@@ -72,6 +72,7 @@ const userMessages = supabase.from('messages')
 .subscribe()
 
 const userChannels = supabase.from('channels')
+//Lägg till insert update
 .on('UPDATE', async payload => {
   localChannels.every( async channel => {
     if (channel.id == payload.old.id && (channel.created_by == supabase.auth.currentUser.id || channel.allowed_users.includes(supabase.auth.currentUser.id))) {
