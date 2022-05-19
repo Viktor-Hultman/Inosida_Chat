@@ -72,7 +72,14 @@ const userMessages = supabase.from('messages')
 .subscribe()
 
 const userChannels = supabase.from('channels')
-//Lägg till insert update
+.on('INSERT', async payload => {
+  let { data, error } = await supabase.from('channels').select('*').match({id: payload.new.id}).single()
+  channels.update(channels => [...channels, data])
+  openChannel(data.id)
+  localStorage.setItem('lastOpenedChannel', data.id)
+  currentChannel.set(data)
+})
+
 .on('UPDATE', async payload => {
   localChannels.every( async channel => {
     if (channel.id == payload.old.id && (channel.created_by == supabase.auth.currentUser.id || channel.allowed_users.includes(supabase.auth.currentUser.id))) {
@@ -165,11 +172,18 @@ export const hideChannel = async (channel_id, channel_user_id, user_id, user_hid
   if (channel_user_id == user_id){
     return 
   }
-  if (user_hidden_channels.includes(channel_id)){
+  if (user_hidden_channels != null && user_hidden_channels.includes(channel_id)){
     return
   }
 
-  let updatedList = [...user_hidden_channels, channel_id]
+  let updatedList
+
+  if(user_hidden_channels == null) {
+    updatedList = [channel_id]
+  } else {
+    updatedList = [...user_hidden_channels, channel_id]
+  }
+
 
   const { data, error } = await supabase.from('users').update({hidden_channels: updatedList}).match({id: user_id})
   addMessage('This user has left this channel and will not be able to see any messages from this chat until they choose to "enter" this channel again!', channel_id, user_id)

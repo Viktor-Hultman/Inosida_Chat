@@ -182,7 +182,7 @@ import { afterUpdate } from 'svelte';
                 return
             }
         }
-        openChannel($channels[0].id)
+        // openChannel($channels[0].id)
         console.log("I run now");
     }
 
@@ -240,7 +240,7 @@ import { afterUpdate } from 'svelte';
         if(upOrDown == "up") {
             console.log("should popup");
             let leftPX = ((target.offsetWidth / 2) - (size / 2) + target.offsetLeft)
-            let topPX = target.offsetTop + target.offsetHeight - 100 
+            let topPX = target.offsetTop + target.offsetHeight - 75 
             // topPx för popups måste göras om, ska inte vara ett fast nummer
             // måste uträkna höjden på popupen som ska beräknas minus på topPX
             // ex. let topPX = target.offsetTop - target.offsetHeight - popup.height - 5px
@@ -353,11 +353,23 @@ import { afterUpdate } from 'svelte';
         removeUserModal.style.display = "block"
     }
     const closeRemoveUserModal = (e) => {
-        console.log(e.target.nodeName)
         if((e.target.nodeName != "path" && e.target.nodeName != "svg") && e.target.className.includes("modal-background")){
             removeUserModal.style.display = "none"
         }
     }
+
+    // let hideShowModal
+
+    // const openHideShowModal = () => {
+    //     hideShowModal.style.display = "block"
+    // }
+
+    // const closeOpenHideShowModal = (e) => {
+    //     console.log(e.target.nodeName)
+    //     if((e.target.nodeName != "path" && e.target.nodeName != "svg") && e.target.className.includes("modal-background")){
+    //         hideShowModal.style.display = "none"
+    //     }
+    // }
 
     let areYouSurePrompt
     let areYouSureText
@@ -406,8 +418,8 @@ import { afterUpdate } from 'svelte';
         <p class="setting-text warning" on:click={() => openAreYouSurePrompt(`radera chattrummet: ${$currentChannel.channel_name}`)}>Radera detta chattrum</p>
     </div>
     <div class="user-settings-popup" bind:offsetWidth={userSettingsPopupWidth} bind:this={userSettingsPopup}>
-        <p class="setting-text" on:click={() => openHideShowModal()}>Göm/visa chattrum</p>
-        <div class="line"></div>
+        <!-- <p class="setting-text" on:click={() => openHideShowModal()}>Göm/visa chattrum</p>
+        <div class="line"></div> -->
         <p class="setting-text" on:click={() => signOut()}>Logga ut</p>
     </div>
     <div class="modal-background" bind:this={addUserModal} on:click={(e) => closeAddUserModal(e)}>
@@ -471,6 +483,39 @@ import { afterUpdate } from 'svelte';
             </div>
         </div>
     </div>
+    <!-- <div class="modal-background" bind:this={hideShowModal} on:click={(e) => closeOpenHideShowModal(e)}>
+        <div class="users-modal-content">
+            <div class="text-close">
+                <h3>Klicka på ett öga för att gömma eller visa ett chattrum.</h3>
+                <div class="close-icon" on:click={() => hideShowModal.style.display = "none"}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1490 1322q0 40-28 68l-136 136q-28 28-68 28t-68-28l-294-294-294 294q-28 28-68 28t-68-28l-136-136q-28-28-28-68t28-68l294-294-294-294q-28-28-28-68t28-68l136-136q28-28 68-28t68 28l294 294 294-294q28-28 68-28t68 28l136 136q28 28 28 68t-28 68l-294 294 294 294q28 28 28 68z"/></svg>
+                </div>
+            </div>
+            <div class="users-list">
+                {#if $channels != null}
+                {#each $channels as channel (channel.id)}
+                    {#if channel.created_by != currentUser.id || (currentUser.hidden_channels != null && currentUser.hidden_channels.includes(channel.id))}
+                    <div class="chat-user">
+                        <p>{truncateString(channel.channel_name, 20)}</p>
+                        <div class="plus-icon" on:click={() => hideAChannel(channel.id, channel.created_by, currentUser.id, currentUser.hidden_channels)}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1600 736v192q0 40-28 68t-68 28h-1216q-40 0-68-28t-28-68v-192q0-40 28-68t68-28h1216q40 0 68 28t28 68z"/></svg>
+                        </div>
+                    </div>
+                    {/if}
+                    {#if channel.created_by != currentUser.id && (currentUser.hidden_channels != null && currentUser.hidden_channels.includes(channel.id != true))} 
+                    <div class="chat-user">
+                        <p>{truncateString(channel.channel_name, 20)}</p>
+                        <p>This is hidden</p>
+                        <div class="plus-icon" on:click={() => hideAChannel(channel.id, channel.created_by, currentUser.id, currentUser.hidden_channels)}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1600 736v192q0 40-28 68t-68 28h-1216q-40 0-68-28t-28-68v-192q0-40 28-68t68-28h1216q40 0 68 28t28 68z"/></svg>
+                        </div>
+                    </div>
+                    {/if}
+                {/each}
+                {/if}
+            </div>
+        </div>
+    </div> -->
     <nav class="navbar">
         <svg xmlns="http://www.w3.org/2000/svg" width="112" height="30" viewBox="0 0 112 30" fill="none">
             <rect x="0.5" y="27.3667" width="46.9508" height="2.51522" fill="white"/>

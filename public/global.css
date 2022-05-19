@@ -301,7 +301,10 @@ button:focus {
 	top: -20000px;
 	padding-top: 5px;
 }
-.chat-settings-dropdown .setting-text, h4 {
+.chat-settings-dropdown .setting-text {
+	padding: 2.5px 10px;
+}
+.chat-settings-dropdown h4 {
 	padding: 2.5px 10px;
 }
 .chat-settings-dropdown .setting-text:hover {
@@ -329,9 +332,12 @@ button:focus {
 	border-radius: 5px;
 	display: none; 
 	top: -20000px;
-	padding-top: 5px;
+	padding: 5px 0px;
 }
-.user-settings-popup .setting-text, h4 {
+.user-settings-popup .setting-text {
+	padding: 2.5px 10px;
+}
+.user-settings-popup h4 {
 	padding: 2.5px 10px;
 }
 .user-settings-popup .setting-text:hover {
