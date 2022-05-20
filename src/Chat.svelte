@@ -410,22 +410,22 @@ import { afterUpdate } from 'svelte';
     <div class="chat-settings-dropdown" bind:offsetWidth={chatSettinsDropdownWidth} bind:this={chatSettinsDropdown}>
         <h4>Inställningar</h4>
         <div class="line"></div>
-        <p class="setting-text" on:click={() => updateAChannelName($currentChannel.channel_name, $currentChannel.id, $currentChannel.created_by, currentUser.id)}>Ändra namn</p>
+        <button class="setting-text" on:click={() => updateAChannelName($currentChannel.channel_name, $currentChannel.id, $currentChannel.created_by, currentUser.id)}>Ändra namn</button>
         <div class="line"></div>
-        <p class="setting-text" on:click={() => openAddUserModal()}>Lägg till användare</p>
+        <button class="setting-text" on:click={() => openAddUserModal()}>Lägg till användare</button>
         <div class="line"></div>
-        <p class="setting-text" on:click={() => openRemoveUserModal()}>Ta bort användare</p>
+        <button class="setting-text" on:click={() => openRemoveUserModal()}>Ta bort användare</button>
         <div class="line"></div>
-        <p class="setting-text warning" on:click={() => openAreYouSurePrompt(`radera chattrummet: ${$currentChannel.channel_name}`)}>Radera detta chattrum</p>
+        <button class="setting-text warning" on:click={() => openAreYouSurePrompt(`radera chattrummet: ${$currentChannel.channel_name}`)}>Radera detta chattrum</button>
     </div>
     <div class="user-settings-popup" bind:offsetWidth={userSettingsPopupWidth} bind:this={userSettingsPopup}>
-        <p class="setting-text" on:click={() => signOut()}>Logga ut</p>
+        <button class="setting-text" on:click={() => signOut()}>Logga ut</button>
     </div>
     <div class="modal-background" bind:this={addUserModal} on:click={(e) => closeAddUserModal(e)}>
         <div class="users-modal-content">
             <div class="text-close">
                 <h3>Klicka på ett plus för att lägga till en användare.</h3>
-                <div class="close-icon" on:click={() => addUserModal.style.display = "none"}>
+                <div class="close-icon" tabindex="0" on:click={() => addUserModal.style.display = "none"}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1490 1322q0 40-28 68l-136 136q-28 28-68 28t-68-28l-294-294-294 294q-28 28-68 28t-68-28l-136-136q-28-28-28-68t28-68l294-294-294-294q-28-28-28-68t28-68l136-136q28-28 68-28t68 28l294 294 294-294q28-28 68-28t68 28l136 136q28 28 28 68t-28 68l-294 294 294 294q28 28 28 68z"/></svg>
                 </div>
             </div>
@@ -436,7 +436,7 @@ import { afterUpdate } from 'svelte';
                 <div class="chat-user">
                     <img class="chat-avatar" src="{user.userdata.avatar_url}" alt="channel user avatar">
                     <p>{truncateString(user.userdata.full_name, 20)}</p>
-                    <div class="plus-icon" on:click={(e) => addAUserToChannel($currentChannel.id, user.id)}>
+                    <div class="plus-icon" tabindex="0" on:click={(e) => addAUserToChannel($currentChannel.id, user.id)}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1600 736v192q0 40-28 68t-68 28h-416v416q0 40-28 68t-68 28h-192q-40 0-68-28t-28-68v-416h-416q-40 0-68-28t-28-68v-192q0-40 28-68t68-28h416v-416q0-40 28-68t68-28h192q40 0 68 28t28 68v416h416q40 0 68 28t28 68z"/></svg>
                     </div>
                 </div>
@@ -450,7 +450,7 @@ import { afterUpdate } from 'svelte';
         <div class="users-modal-content">
             <div class="text-close">
                 <h3>Klicka på ett minus för att ta bort en användare.</h3>
-                <div class="close-icon" on:click={() => removeUserModal.style.display = "none"}>
+                <div class="close-icon" tabindex="0" on:click={() => removeUserModal.style.display = "none"}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1490 1322q0 40-28 68l-136 136q-28 28-68 28t-68-28l-294-294-294 294q-28 28-68 28t-68-28l-136-136q-28-28-28-68t28-68l294-294-294-294q-28-28-28-68t28-68l136-136q28-28 68-28t68 28l294 294 294-294q28-28 68-28t68 28l136 136q28 28 28 68t-28 68l-294 294 294 294q28 28 28 68z"/></svg>
                 </div>
             </div>
@@ -462,7 +462,7 @@ import { afterUpdate } from 'svelte';
                 <div class="chat-user">
                     <img class="chat-avatar" src="{user.userdata.avatar_url}" alt="channel user avatar">
                     <p>{truncateString(user.userdata.full_name, 20)}</p>
-                    <div class="plus-icon" on:click={(e) => removeAUserfromChannel($currentChannel.id, user.id)}>
+                    <div class="plus-icon" tabindex="0" on:click={(e) => removeAUserfromChannel($currentChannel.id, user.id)}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1600 736v192q0 40-28 68t-68 28h-1216q-40 0-68-28t-28-68v-192q0-40 28-68t68-28h1216q40 0 68 28t28 68z"/></svg>
                     </div>
                 </div>

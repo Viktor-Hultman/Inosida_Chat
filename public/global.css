@@ -38,7 +38,7 @@ input, button, select, textarea {
 	font-size: inherit;
 	box-sizing: border-box;
 	border: 1px solid #ccc;
-	border-radius: 2px;
+	/* border-radius: 2px; */
 }
 
 input:disabled {
@@ -55,9 +55,9 @@ button:disabled {
 	color: #999;
 }
 
-button:focus {
+/* button:focus {
 	border-color: #666;
-}
+} */
 
 
 .disable-text-select {
@@ -294,7 +294,7 @@ button:focus {
 .chat-user {
 	display: flex;
 	align-items: center;
-	margin-bottom: 5px;
+	margin-bottom: 5pxsetting-text;
 }
 
 .chat-settings-dropdown {
@@ -308,6 +308,9 @@ button:focus {
 }
 .chat-settings-dropdown .setting-text {
 	padding: 2.5px 10px;
+	width: 100%;
+	text-align: start;
+	border: none;
 }
 .chat-settings-dropdown h4 {
 	padding: 2.5px 10px;
@@ -341,9 +344,7 @@ button:focus {
 }
 .user-settings-popup .setting-text {
 	padding: 2.5px 10px;
-}
-.user-settings-popup h4 {
-	padding: 2.5px 10px;
+	border: none;
 }
 .user-settings-popup .setting-text:hover {
 	background: rgba(0,0,0,0.04); 
@@ -704,6 +705,10 @@ button:focus {
 	background-color: rgba(0,0,0,0.12); 
 	box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
 } */
+
+.warning {
+	color: red;
+}
 
 pre {
 	font-family: inherit;
