@@ -129,7 +129,9 @@ import { afterUpdate } from 'svelte';
         } else if (event.keyCode === 13 && regex.test(message)) {
             addMessage(message, channel_id, currentUser.id)
             messageInputVal = "";
+            sendButton.classList.remove("send-button-active")
             event.preventDefault();
+            return
         } else if (event.keyCode === 13){
             event.preventDefault();
             return
@@ -144,6 +146,7 @@ import { afterUpdate } from 'svelte';
         console.log(message.length, messageInputVal.length);
         addMessage(message, channel_id, currentUser.id)
         messageInputVal = ""; 
+        sendButton.classList.remove("send-button-active")
     }
 
     
@@ -360,19 +363,6 @@ import { afterUpdate } from 'svelte';
         }
     }
 
-    // let hideShowModal
-
-    // const openHideShowModal = () => {
-    //     hideShowModal.style.display = "block"
-    // }
-
-    // const closeOpenHideShowModal = (e) => {
-    //     console.log(e.target.nodeName)
-    //     if((e.target.nodeName != "path" && e.target.nodeName != "svg") && e.target.className.includes("modal-background")){
-    //         hideShowModal.style.display = "none"
-    //     }
-    // }
-
     let areYouSurePrompt
     let areYouSureText
 
@@ -390,6 +380,14 @@ import { afterUpdate } from 'svelte';
         areYouSurePrompt.style.display = "none"
         chatSettinsDropdown.style.display = "none"
         $currentChannel = false
+    }
+
+    const showMessageSettings = (e) => {
+        e.target.children[1].style.display = "flex"
+    }
+
+    const hideMessageSettings = (e) => {
+        e.target.children[1].style.display = "none"
     }
 
 
@@ -422,8 +420,6 @@ import { afterUpdate } from 'svelte';
         <p class="setting-text warning" on:click={() => openAreYouSurePrompt(`radera chattrummet: ${$currentChannel.channel_name}`)}>Radera detta chattrum</p>
     </div>
     <div class="user-settings-popup" bind:offsetWidth={userSettingsPopupWidth} bind:this={userSettingsPopup}>
-        <!-- <p class="setting-text" on:click={() => openHideShowModal()}>Göm/visa chattrum</p>
-        <div class="line"></div> -->
         <p class="setting-text" on:click={() => signOut()}>Logga ut</p>
     </div>
     <div class="modal-background" bind:this={addUserModal} on:click={(e) => closeAddUserModal(e)}>
@@ -487,39 +483,6 @@ import { afterUpdate } from 'svelte';
             </div>
         </div>
     </div>
-    <!-- <div class="modal-background" bind:this={hideShowModal} on:click={(e) => closeOpenHideShowModal(e)}>
-        <div class="users-modal-content">
-            <div class="text-close">
-                <h3>Klicka på ett öga för att gömma eller visa ett chattrum.</h3>
-                <div class="close-icon" on:click={() => hideShowModal.style.display = "none"}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1490 1322q0 40-28 68l-136 136q-28 28-68 28t-68-28l-294-294-294 294q-28 28-68 28t-68-28l-136-136q-28-28-28-68t28-68l294-294-294-294q-28-28-28-68t28-68l136-136q28-28 68-28t68 28l294 294 294-294q28-28 68-28t68 28l136 136q28 28 28 68t-28 68l-294 294 294 294q28 28 28 68z"/></svg>
-                </div>
-            </div>
-            <div class="users-list">
-                {#if $channels != null}
-                {#each $channels as channel (channel.id)}
-                    {#if channel.created_by != currentUser.id || (currentUser.hidden_channels != null && currentUser.hidden_channels.includes(channel.id))}
-                    <div class="chat-user">
-                        <p>{truncateString(channel.channel_name, 20)}</p>
-                        <div class="plus-icon" on:click={() => hideAChannel(channel.id, channel.created_by, currentUser.id, currentUser.hidden_channels)}>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1600 736v192q0 40-28 68t-68 28h-1216q-40 0-68-28t-28-68v-192q0-40 28-68t68-28h1216q40 0 68 28t28 68z"/></svg>
-                        </div>
-                    </div>
-                    {/if}
-                    {#if channel.created_by != currentUser.id && (currentUser.hidden_channels != null && currentUser.hidden_channels.includes(channel.id != true))} 
-                    <div class="chat-user">
-                        <p>{truncateString(channel.channel_name, 20)}</p>
-                        <p>This is hidden</p>
-                        <div class="plus-icon" on:click={() => hideAChannel(channel.id, channel.created_by, currentUser.id, currentUser.hidden_channels)}>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1600 736v192q0 40-28 68t-68 28h-1216q-40 0-68-28t-28-68v-192q0-40 28-68t68-28h1216q40 0 68 28t28 68z"/></svg>
-                        </div>
-                    </div>
-                    {/if}
-                {/each}
-                {/if}
-            </div>
-        </div>
-    </div> -->
     <nav class="navbar">
         <svg xmlns="http://www.w3.org/2000/svg" width="112" height="30" viewBox="0 0 112 30" fill="none">
             <rect x="0.5" y="27.3667" width="46.9508" height="2.51522" fill="white"/>
@@ -549,18 +512,12 @@ import { afterUpdate } from 'svelte';
                         {#if channel.id == $currentChannel.id}
                             <div class="channel activeCurrentChannel" on:click={(e) => openAChannel(e, channel.id)}>
                                 <div class="channel-info">
-                                    <!-- <div class="channel-icon"></div> -->
                                     <p>{truncateString(channel.channel_name, 29)}</p>
                                 </div>
-                                <!-- <div class="setting-icon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1152 896q0-106-75-181t-181-75-181 75-75 181 75 181 181 75 181-75 75-181zm512-109v222q0 12-8 23t-20 13l-185 28q-19 54-39 91 35 50 107 138 10 12 10 25t-9 23q-27 37-99 108t-94 71q-12 0-26-9l-138-108q-44 23-91 38-16 136-29 186-7 28-36 28h-222q-14 0-24.5-8.5t-11.5-21.5l-28-184q-49-16-90-37l-141 107q-10 9-25 9-14 0-25-11-126-114-165-168-7-10-7-23 0-12 8-23 15-21 51-66.5t54-70.5q-27-50-41-99l-183-27q-13-2-21-12.5t-8-23.5v-222q0-12 8-23t19-13l186-28q14-46 39-92-40-57-107-138-10-12-10-24 0-10 9-23 26-36 98.5-107.5t94.5-71.5q13 0 26 10l138 107q44-23 91-38 16-136 29-186 7-28 36-28h222q14 0 24.5 8.5t11.5 21.5l28 184q49 16 90 37l142-107q9-9 24-9 13 0 25 10 129 119 165 170 7 8 7 22 0 12-8 23-15 21-51 66.5t-54 70.5q26 50 41 98l183 28q13 2 21 12.5t8 23.5z"/></svg>
-                                </div> -->
-                                    <!-- <button on:click={() => hideAChannel(channel.id, channel.created_by, dbUser.id, dbUser.hidden_channels)}>Leave Channel</button> -->
                             </div>
                         {:else}
                             <div class="channel" on:click={(e) => openAChannel(e, channel.id)}>
                                 <div class="channel-info">
-                                    <!-- <div class="channel-icon"></div> -->
                                     <p>{truncateString(channel.channel_name, 29)}</p>
                                 </div>
                             </div>
@@ -614,29 +571,50 @@ import { afterUpdate } from 'svelte';
                         </div>
                         {/if}
                     </div>
-                    <!-- <div class="curC-search">
-                        <input type="text">
-                    </div> -->
                 </div>
                 <div class="chat" bind:this={messageContainer}>
                     {#each $channelMessages as message (message.id)}
-                        <div class="message">
-                            <img class="message-avatar" src="{message.user_id.userdata.avatar_url}" alt="message-avatar">
-                            <div class="message-content">
-                                <div class="message-data">
-                                    <h4 class="message-name">{message.user_id.userdata.name}</h4>
-                                    <p class="message-date">{getDate(message.inserted_at)}</p>
-                                    {#if message.edited}
-                                        <span class="edited-text">(edited)</span>
-                                    {/if}
+                        {#if message.user_id.id == currentUser.id}
+                            <div class="message" on:mouseleave={(e) => hideMessageSettings(e)} on:mouseenter={(e) => showMessageSettings(e)}>
+                                <div class="message-container">
+                                    <img class="message-avatar" src="{message.user_id.userdata.avatar_url}" alt="message-avatar">
+                                    <div class="message-content">
+                                        <div class="message-data">
+                                            <h4 class="message-name">{message.user_id.userdata.name}</h4>
+                                            <p class="message-date">{getDate(message.inserted_at)}</p>
+                                            {#if message.edited}
+                                                <span class="edited-text">(edited)</span>
+                                            {/if}
+                                        </div>
+                                        <pre class="message-text">{message.message}</pre>
+                                    </div>
                                 </div>
-                                <pre class="message-text">{message.message}</pre>
+                                <div class="message-popups">
+                                    <div class="popup edit-pen">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M491 1536l91-91-235-235-91 91v107h128v128h107zm523-928q0-22-22-22-10 0-17 7l-542 542q-7 7-7 17 0 22 22 22 10 0 17-7l542-542q7-7 7-17zm-54-192l416 416-832 832h-416v-416zm683 96q0 53-37 90l-166 166-416-416 166-165q36-38 90-38 53 0 91 38l235 234q37 39 37 91z"/></svg>
+                                    </div>
+                                    <div class="popup trashcan" on:click={() => deleteMessage(message.id, message.user_id.id, currentUser.id)}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M704 1376v-704q0-14-9-23t-23-9h-64q-14 0-23 9t-9 23v704q0 14 9 23t23 9h64q14 0 23-9t9-23zm256 0v-704q0-14-9-23t-23-9h-64q-14 0-23 9t-9 23v704q0 14 9 23t23 9h64q14 0 23-9t9-23zm256 0v-704q0-14-9-23t-23-9h-64q-14 0-23 9t-9 23v704q0 14 9 23t23 9h64q14 0 23-9t9-23zm-544-992h448l-48-117q-7-9-17-11h-317q-10 2-17 11zm928 32v64q0 14-9 23t-23 9h-96v948q0 83-47 143.5t-113 60.5h-832q-66 0-113-58.5t-47-141.5v-952h-96q-14 0-23-9t-9-23v-64q0-14 9-23t23-9h309l70-167q15-37 54-63t79-26h320q40 0 79 26t54 63l70 167h309q14 0 23 9t9 23z"/></svg>
+                                    </div>
+                                </div>
                             </div>
-                            <!-- {#if message.user_id.id == currentUser.id}
-                                <button on:click={() => updateAMessage(message.message, message.id, message.user_id.id, currentUser.id)}>Update</button>
-                                <button on:click={() => deleteMessage(message.id, message.user_id.id, currentUser.id)}>Delete</button>
-                            {/if} -->
-                        </div>
+                        {:else}
+                            <div class="message">
+                                <div class="message-container">
+                                    <img class="message-avatar" src="{message.user_id.userdata.avatar_url}" alt="message-avatar">
+                                    <div class="message-content">
+                                        <div class="message-data">
+                                            <h4 class="message-name">{message.user_id.userdata.name}</h4>
+                                            <p class="message-date">{getDate(message.inserted_at)}</p>
+                                            {#if message.edited}
+                                                <span class="edited-text">(edited)</span>
+                                            {/if}
+                                        </div>
+                                        <pre class="message-text">{message.message}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        {/if}
                     {/each}
                 </div>
                 <div class="chat-input-container">
@@ -656,9 +634,6 @@ import { afterUpdate } from 'svelte';
                         <div id="link-icon" class="format-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1520 1216q0-40-28-68l-208-208q-28-28-68-28-42 0-72 32 3 3 19 18.5t21.5 21.5 15 19 13 25.5 3.5 27.5q0 40-28 68t-68 28q-15 0-27.5-3.5t-25.5-13-19-15-21.5-21.5-18.5-19q-33 31-33 73 0 40 28 68l206 207q27 27 68 27 40 0 68-26l147-146q28-28 28-67zm-703-705q0-40-28-68l-206-207q-28-28-68-28-39 0-68 27l-147 146q-28 28-28 67 0 40 28 68l208 208q27 27 68 27 42 0 72-31-3-3-19-18.5t-21.5-21.5-15-19-13-25.5-3.5-27.5q0-40 28-68t68-28q15 0 27.5 3.5t25.5 13 19 15 21.5 21.5 18.5 19q33-31 33-73zm895 705q0 120-85 203l-147 146q-83 83-203 83-121 0-204-85l-206-207q-83-83-83-203 0-123 88-209l-88-88q-86 88-208 88-120 0-204-84l-208-208q-84-84-84-204t85-203l147-146q83-83 203-83 121 0 204 85l206 207q83 83 83 203 0 123-88 209l88 88q86-88 208-88 120 0 204 84l208 208q84 84 84 204z"/></svg>
                         </div>
-                        <!-- <div id="emoji-icon" class="format-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="22px" height="22px" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1262 1075q-37 121-138 195t-228 74-228-74-138-195q-8-25 4-48.5t38-31.5q25-8 48.5 4t31.5 38q25 80 92.5 129.5t151.5 49.5 151.5-49.5 92.5-129.5q8-26 32-38t49-4 37 31.5 4 48.5zm-494-435q0 53-37.5 90.5t-90.5 37.5-90.5-37.5-37.5-90.5 37.5-90.5 90.5-37.5 90.5 37.5 37.5 90.5zm512 0q0 53-37.5 90.5t-90.5 37.5-90.5-37.5-37.5-90.5 37.5-90.5 90.5-37.5 90.5 37.5 37.5 90.5zm256 256q0-130-51-248.5t-136.5-204-204-136.5-248.5-51-248.5 51-204 136.5-136.5 204-51 248.5 51 248.5 136.5 204 204 136.5 248.5 51 248.5-51 204-136.5 136.5-204 51-248.5zm128 0q0 209-103 385.5t-279.5 279.5-385.5 103-385.5-103-279.5-279.5-103-385.5 103-385.5 279.5-279.5 385.5-103 385.5 103 279.5 279.5 103 385.5z"/></svg>
-                        </div> -->
                     </div>
                     <div class="input-and-buttons">
                         <textarea class="message-input-field"

@@ -55,10 +55,6 @@ button:disabled {
 	color: #999;
 }
 
-button:not(:disabled):active {
-	background-color: #ddd;
-}
-
 button:focus {
 	border-color: #666;
 }
@@ -515,6 +511,7 @@ button:focus {
 	max-width: 100%;
 	display: flex;
 	align-items: flex-start;
+	justify-content: space-between;
 	margin-bottom: 10px;
 }
 
@@ -524,6 +521,8 @@ button:focus {
 
 .message-avatar {
 	width: 40px;
+	/* min-width: 40px; */
+	height: 40px;
 	border-radius: 50%;
 	margin-right: 15px;
 }
@@ -540,6 +539,44 @@ button:focus {
 .message-date {
 	font-size: 14px;
 	margin-right: 5px;
+}
+
+.message-container {
+	display: flex;
+}
+
+.message-popups {
+	display: none;
+}
+
+.message-popups .edit-pen {
+	margin-right: 10px;
+}
+
+.message-popups .popup {
+	min-width: 24px;
+	height: 24px;
+	display: flex;
+	align-items: center;
+	background: #f3f3f3;
+    border: 1px solid #BBBBBB;
+    border-radius: 5px;
+    padding: 4px;
+}
+.message-popups .popup:hover {
+	cursor: pointer;
+	background-color: rgba(0,0,0,0.04); 
+	box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
+}
+.message-popups .popup:focus {
+	cursor: pointer;
+	background-color: rgba(0,0,0,0.12); 
+	box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
+}
+.message-popups .popup:active {
+	cursor: pointer;
+	background-color: rgba(0,0,0,0.12); 
+	box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
 }
 
 .edited-text {
@@ -626,7 +663,7 @@ button:focus {
 	box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
 }
 
-.time-button {
+/* .time-button {
 	background-color: #fff;
 	color: #333;
 	height: 40px;
@@ -648,7 +685,7 @@ button:focus {
 	border-color: #bababa;
 	background-color: rgba(0,0,0,0.12); 
 	box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
-}
+} */
 
 pre {
 	font-family: inherit;
