@@ -366,7 +366,7 @@ button:focus {
 .modal-background {
 	display: none; /* Hidden by default */
 	position: fixed;
-	z-index: 100; /* Sit on top */
+	z-index: 1000; /* Sit on top */
 	left: 0;
 	top: 0;
 	width: 100%;
@@ -506,6 +506,24 @@ button:focus {
 	padding: 20px 0px;
 }
 
+.date-line {
+	display: flex;
+	align-items: center;
+	width: 100%;
+}
+
+.date-line .line{
+	width: 50%;
+	height: 1px;
+	background: #BBBBBB;
+}
+
+.date-line .line-date {
+	white-space: nowrap;
+	font-size: 12px;
+	padding: 0px 2px;
+}
+
 .message {
 	padding: 5px 20px 5px 20px;
 	max-width: 100%;
@@ -554,8 +572,8 @@ button:focus {
 }
 
 .message-popups .popup {
-	min-width: 24px;
-	height: 24px;
+	min-width: 20px;
+	height: 20px;
 	display: flex;
 	align-items: center;
 	background: #f3f3f3;

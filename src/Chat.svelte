@@ -200,6 +200,7 @@ import { afterUpdate } from 'svelte';
     }
 
     const getDate = (db_date) => {
+        console.log(db_date)
         let msgDate = db_date.slice(0, 10)
         return msgDate
     }
@@ -388,9 +389,7 @@ import { afterUpdate } from 'svelte';
 
     const hideMessageSettings = (e) => {
         e.target.children[1].style.display = "none"
-    }
-
-
+    } 
 
 
 </script>
@@ -507,7 +506,7 @@ import { afterUpdate } from 'svelte';
             </div>
             <div class="channels-container">
                 {#if $channels != null}
-                    {#each $channels as channel (channel.id)}
+                    {#each $channels as channel}
                         {#if dbUser && (dbUser.hidden_channels == null || !dbUser.hidden_channels.includes(channel.id))}
                         {#if channel.id == $currentChannel.id}
                             <div class="channel activeCurrentChannel" on:click={(e) => openAChannel(e, channel.id)}>
@@ -552,7 +551,7 @@ import { afterUpdate } from 'svelte';
                             on:click={(e) => openUsersDropdown(e)}
                         >
                             <div class="user-avatars">
-                                {#each $allUsers as user (user.id)}
+                                {#each $allUsers as user}
                                     {#if $currentChannel.allowed_users != null && $currentChannel.allowed_users.includes(user.id) || $currentChannel.created_by == user.id}
                                         <img class="chat-avatar" src="{user.userdata.avatar_url}" alt="channel user avatar">
                                     {/if}
@@ -573,7 +572,14 @@ import { afterUpdate } from 'svelte';
                     </div>
                 </div>
                 <div class="chat" bind:this={messageContainer}>
-                    {#each $channelMessages as message (message.id)}
+                    {#each $channelMessages as message, i}
+                        {#if i == 0 || getDate(message.inserted_at) != getDate($channelMessages[i-1].inserted_at)}
+                            <div class="date-line">
+                                <div class="line"></div>
+                                <span class="line-date">{getDate(message.inserted_at)}</span>
+                                <div class="line"></div>
+                            </div>
+                        {/if}
                         {#if message.user_id.id == currentUser.id}
                             <div class="message" on:mouseleave={(e) => hideMessageSettings(e)} on:mouseenter={(e) => showMessageSettings(e)}>
                                 <div class="message-container">
@@ -615,6 +621,9 @@ import { afterUpdate } from 'svelte';
                                 </div>
                             </div>
                         {/if}
+                        <!-- {#if true}
+                            <div class="date-line"></div>
+                        {/if} -->
                     {/each}
                 </div>
                 <div class="chat-input-container">

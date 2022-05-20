@@ -21,7 +21,7 @@ channelMessages.subscribe((messages) => {
   currentChannelMessages = messages
   if(currentChannelMessages.length > 0){
     currentChannelMessages.sort(function (a, b) {
-      return a.id - b.id;
+      return new Date(a.inserted_at) - new Date(b.inserted_at);
     });
   }
 })
@@ -31,7 +31,7 @@ channels.subscribe((channels) => {
   localChannels = channels
   if(localChannels != null){
     localChannels.sort(function (a, b) {
-      return a.id - b.id;
+      return new Date(a.inserted_at) - new Date(b.inserted_at);
     });
   }
 })
