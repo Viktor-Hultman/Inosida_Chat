@@ -64,6 +64,15 @@ button:focus {
 }
 
 
+.disable-text-select {
+    user-select: none; /* supported by Chrome and Opera */
+   -webkit-user-select: none; /* Safari */
+   -khtml-user-select: none; /* Konqueror HTML */
+   -moz-user-select: none; /* Firefox */
+   -ms-user-select: none; /* Internet Explorer/Edge */
+}
+
+
 .chat-page {
 	height: 100%;
 	width: 100%;
@@ -361,7 +370,7 @@ button:focus {
 .modal-background {
 	display: none; /* Hidden by default */
 	position: fixed;
-	z-index: 10; /* Sit on top */
+	z-index: 100; /* Sit on top */
 	left: 0;
 	top: 0;
 	width: 100%;
@@ -571,7 +580,7 @@ button:focus {
 }
 
 .message-input-field {
-	width: calc(100% - 200px);
+	width: calc(100% - 100px);
 	height: 40px;
 	resize: none;
 	border-radius: 5px;
@@ -579,10 +588,10 @@ button:focus {
 }
 
 .message-buttons {
-	width: 200px;
+	width: 100px;
 	display: flex;
 	align-items: center;
-	justify-content: flex-end;
+	justify-content: space-evenly;
 }
 
 .send-button {
@@ -591,12 +600,14 @@ button:focus {
 	height: 40px;
 	border-radius: 10px;
 	padding: 0px 10px;
-	margin-right: 20px;
+	/* margin-right: 20px; */
+	pointer-events: none;
 }
 
 .send-button-active {
 	background-color: #000852;
 	color: #fff;
+	pointer-events: initial;
 }
 .send-button-active:hover {
 	cursor: pointer;
@@ -655,6 +666,14 @@ pre {
 	}
 
 	.curC {
+		width: 100%;
+	}
+
+	.message-buttons {
+		display: none;
+	}
+
+	.message-input-field {
 		width: 100%;
 	}
 

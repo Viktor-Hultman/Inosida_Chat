@@ -106,8 +106,16 @@ import { afterUpdate } from 'svelte';
         // e.target.style.height = e.target.scrollHeight + 'px';
     }
 
+    let sendButton
+
     const checkInputVal = (e) => {
-        console.log(e)
+        if(e.target.value != ""){
+            sendButton.classList.add("send-button-active")
+        } 
+
+        if(e.target.value == ""){
+            sendButton.classList.remove("send-button-active")
+        }
     }
     
 
@@ -152,21 +160,15 @@ import { afterUpdate } from 'svelte';
 
         }
     }
-    let lastOpenedChannelId = null
 
-    //Getting the previous opened channel id if it exist in storage
-    if (localStorage.getItem('lastOpenedChannel')){
-        lastOpenedChannelId = localStorage.getItem('lastOpenedChannel')
-        // console.log(lastOpenedChannelId)
-    }
 
-    $:if ($channels != null && lastOpenedChannelId != null) {
+    $:if ($channels != null && localStorage.getItem('lastOpenedChannel') != null) {
         // If the user is part of any channel and has selected a 
         // chat previous that is still logged in local storage
         // open that previous channel when page loads
         openLastOpenedChannel()
 
-    } else if ($channels != null && lastOpenedChannelId == null) {
+    } else if ($channels != null && localStorage.getItem('lastOpenedChannel') == null) {
         // Else if there is no previous opened channel logged,
         // open the "first" channel
         openChannel($channels[0].id)
@@ -176,13 +178,13 @@ import { afterUpdate } from 'svelte';
 
     const openLastOpenedChannel = () => {
         for (let i = 0; i < $channels.length; i++){
-            if($channels[i].id == lastOpenedChannelId){
-                openChannel(lastOpenedChannelId)
+            if($channels[i].id == localStorage.getItem('lastOpenedChannel')){
+                openChannel(localStorage.getItem('lastOpenedChannel'))
                 console.log("I run now");
                 return
             }
         }
-        // openChannel($channels[0].id)
+        openChannel($channels[0].id)
         console.log("I run now");
     }
 
@@ -260,7 +262,7 @@ import { afterUpdate } from 'svelte';
 
         allChatUsersDropdown.style.display = "block";
         allChatUsersDropdown.style.zIndex = currentHighestZindex + 1
-        currentHighestZindex = allChatUsersDropdown.style.zIndex
+        currentHighestZindex = Number(allChatUsersDropdown.style.zIndex)
 
         if(allChatUsersDropdownWidth == 0) {
             setTimeout(() => { 
@@ -281,7 +283,7 @@ import { afterUpdate } from 'svelte';
 
         chatSettinsDropdown.style.display = "block";
         chatSettinsDropdown.style.zIndex = currentHighestZindex + 1
-        currentHighestZindex = chatSettinsDropdown.style.zIndex
+        currentHighestZindex = Number(chatSettinsDropdown.style.zIndex)
 
         if(chatSettinsDropdownWidth == 0) {
             setTimeout(() => { 
@@ -302,7 +304,7 @@ import { afterUpdate } from 'svelte';
 
         userSettingsPopup.style.display = "block";
         userSettingsPopup.style.zIndex = currentHighestZindex + 1
-        currentHighestZindex = userSettingsPopup.style.zIndex
+        currentHighestZindex = Number(userSettingsPopup.style.zIndex)
 
         if(userSettingsPopupWidth == 0) {
             setTimeout(() => { 
@@ -389,6 +391,8 @@ import { afterUpdate } from 'svelte';
         chatSettinsDropdown.style.display = "none"
         $currentChannel = false
     }
+
+
 
 
 </script>
@@ -610,9 +614,9 @@ import { afterUpdate } from 'svelte';
                         </div>
                         {/if}
                     </div>
-                    <div class="curC-search">
+                    <!-- <div class="curC-search">
                         <input type="text">
-                    </div>
+                    </div> -->
                 </div>
                 <div class="chat" bind:this={messageContainer}>
                     {#each $channelMessages as message (message.id)}
@@ -652,9 +656,9 @@ import { afterUpdate } from 'svelte';
                         <div id="link-icon" class="format-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1520 1216q0-40-28-68l-208-208q-28-28-68-28-42 0-72 32 3 3 19 18.5t21.5 21.5 15 19 13 25.5 3.5 27.5q0 40-28 68t-68 28q-15 0-27.5-3.5t-25.5-13-19-15-21.5-21.5-18.5-19q-33 31-33 73 0 40 28 68l206 207q27 27 68 27 40 0 68-26l147-146q28-28 28-67zm-703-705q0-40-28-68l-206-207q-28-28-68-28-39 0-68 27l-147 146q-28 28-28 67 0 40 28 68l208 208q27 27 68 27 42 0 72-31-3-3-19-18.5t-21.5-21.5-15-19-13-25.5-3.5-27.5q0-40 28-68t68-28q15 0 27.5 3.5t25.5 13 19 15 21.5 21.5 18.5 19q33-31 33-73zm895 705q0 120-85 203l-147 146q-83 83-203 83-121 0-204-85l-206-207q-83-83-83-203 0-123 88-209l-88-88q-86 88-208 88-120 0-204-84l-208-208q-84-84-84-204t85-203l147-146q83-83 203-83 121 0 204 85l206 207q83 83 83 203 0 123-88 209l88 88q86-88 208-88 120 0 204 84l208 208q84 84 84 204z"/></svg>
                         </div>
-                        <div id="emoji-icon" class="format-icon">
+                        <!-- <div id="emoji-icon" class="format-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" width="22px" height="22px" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1262 1075q-37 121-138 195t-228 74-228-74-138-195q-8-25 4-48.5t38-31.5q25-8 48.5 4t31.5 38q25 80 92.5 129.5t151.5 49.5 151.5-49.5 92.5-129.5q8-26 32-38t49-4 37 31.5 4 48.5zm-494-435q0 53-37.5 90.5t-90.5 37.5-90.5-37.5-37.5-90.5 37.5-90.5 90.5-37.5 90.5 37.5 37.5 90.5zm512 0q0 53-37.5 90.5t-90.5 37.5-90.5-37.5-37.5-90.5 37.5-90.5 90.5-37.5 90.5 37.5 37.5 90.5zm256 256q0-130-51-248.5t-136.5-204-204-136.5-248.5-51-248.5 51-204 136.5-136.5 204-51 248.5 51 248.5 136.5 204 204 136.5 248.5 51 248.5-51 204-136.5 136.5-204 51-248.5zm128 0q0 209-103 385.5t-279.5 279.5-385.5 103-385.5-103-279.5-279.5-103-385.5 103-385.5 279.5-279.5 385.5-103 385.5 103 279.5 279.5 103 385.5z"/></svg>
-                        </div>
+                        </div> -->
                     </div>
                     <div class="input-and-buttons">
                         <textarea class="message-input-field"
@@ -666,17 +670,18 @@ import { afterUpdate } from 'svelte';
                             on:input={(e) => checkInputVal(e)}
                         />
                         <div class="message-buttons">
-                            <button class="send-button send-button-active"
+                            <button class="send-button disable-text-select"
+                            bind:this={sendButton}
                             on:click={(e) => removeFocus(e)}
                             on:click={(e) => submitOnButton(e, messageInputVal, $currentChannel.id)}
                             >
                                 Skicka
                             </button>
-                            <button class="time-button"
+                            <!-- <button class="time-button"
                             on:click={(e) => removeFocus(e)}
                             >
                                 Tillsvidare
-                            </button>
+                            </button> -->
                         </div>
                     </div>
                 </div>
