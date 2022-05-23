@@ -17,6 +17,6 @@ This project was used togheter with a [Supabase](https://app.supabase.io/) datab
 **This project includes**
 - No sign-up, only a simple login using a Google account is needed.
 - Creating, updating and deleting your channels and messages.
-- Invite any user to your channels that has logged into the webbapp.
+- Invite any user to your channels that has logged into the web app.
 - Only the user that has created a channel or a message in a channel can update or delete them. 
 
