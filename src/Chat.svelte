@@ -66,6 +66,7 @@ import { afterUpdate } from 'svelte';
 
     const updateAMessage = async (message, message_id, message_user_id, user_id) => {
         const newMessage = prompt("Update your previous message", message)
+        
         if (newMessage) {
             updateMessage(newMessage, message_id, message_user_id, user_id)
         }
@@ -175,20 +176,16 @@ import { afterUpdate } from 'svelte';
         // Else if there is no previous opened channel logged,
         // open the "first" channel
         openChannel($channels[0].id)
-        console.log("I run now");
-        console.log($channels)
     }
 
     const openLastOpenedChannel = () => {
         for (let i = 0; i < $channels.length; i++){
             if($channels[i].id == localStorage.getItem('lastOpenedChannel')){
                 openChannel(localStorage.getItem('lastOpenedChannel'))
-                console.log("I run now");
                 return
             }
         }
         openChannel($channels[0].id)
-        console.log("I run now");
     }
 
     let dbUser = null
@@ -200,7 +197,6 @@ import { afterUpdate } from 'svelte';
     }
 
     const getDate = (db_date) => {
-        console.log(db_date)
         let msgDate = db_date.slice(0, 10)
         return msgDate
     }
@@ -235,26 +231,26 @@ import { afterUpdate } from 'svelte';
     let userSettingsIcon
 
     const calcCenter = (target, elem, size, upOrDown) => {
-        // console.log(elem, target, size)
-        if(upOrDown == "down") {
-            let leftPX = ((target.offsetWidth / 2) - (size / 2) + target.offsetLeft)
-            let topPX = target.offsetTop + target.offsetHeight + 5
+        let leftPX
+        let topPX
 
-            elem.style.left = leftPX + "px"
-            elem.style.top = topPX + "px"
+        if(upOrDown == "down") {
+            leftPX = ((target.offsetWidth / 2) - (size / 2) + target.offsetLeft)
+            topPX = target.offsetTop + target.offsetHeight + 5
         }
+
         if(upOrDown == "up") {
             console.log("should popup");
-            let leftPX = ((target.offsetWidth / 2) - (size / 2) + target.offsetLeft)
-            let topPX = target.offsetTop + target.offsetHeight - 75 
-            // topPx för popups måste göras om, ska inte vara ett fast nummer
-            // måste uträkna höjden på popupen som ska beräknas minus på topPX
-            // ex. let topPX = target.offsetTop - target.offsetHeight - popup.height - 5px
+            leftPX = ((target.offsetWidth / 2) - (size / 2) + target.offsetLeft)
+            topPX = target.offsetTop - target.offsetHeight
 
-            elem.style.left = leftPX + "px"
-            elem.style.top = topPX + "px"
+            if(window.innerWidth < 768) {
+                topPX += 60
+            }
         }
 
+        elem.style.left = leftPX + "px"
+        elem.style.top = topPX + "px"
     }
 
     const openUsersDropdown = () => {
@@ -306,15 +302,14 @@ import { afterUpdate } from 'svelte';
             return
         }
 
-        userSettingsPopup.style.display = "block";
-
         if(userSettingsPopupWidth == 0) {
             setTimeout(() => { 
                 calcCenter(userSettingsIcon, userSettingsPopup, userSettingsPopupWidth, "up")
-            }, 100)
+            }, 50)
         } else {
             calcCenter(userSettingsIcon, userSettingsPopup, userSettingsPopupWidth, "up")
         }
+        userSettingsPopup.style.display = "block";
         userSettingsOpen = true
     }
 
@@ -324,8 +319,39 @@ import { afterUpdate } from 'svelte';
 		await db.signOut();
 	}
 
+    let maxUserAvatars = 10
+
+    // Checking for the window width to determine how many user avatars should be displayed
+    // Running once when page loads
+    if (window.innerWidth < 900 && window.innerWidth > 768) {
+        maxUserAvatars = 5
+    } else {
+        maxUserAvatars = 10
+    }
+    console.log(maxUserAvatars)
+    
 
     const clientResize = () => {
+        //When the window is resized
+        if(window.innerWidth > 768) {
+            sidebar.style.display = ""
+            navMenuOpenIcon.style.display = "block"
+            navMenuCloseIcon.style.display = "none"
+        }
+
+        if(window.innerWidth < 768 && (sidebar.style.display == "none" || sidebar.style.display == "")) {
+            userSettingsPopup.style.display = "none";
+            userSettingsOpen = false
+        }
+
+        // Checking for the window width to determine how many user avatars should be displayed
+        if (window.innerWidth < 900 && window.innerWidth > 768) {
+            maxUserAvatars = 5
+        } else {
+            maxUserAvatars = 10
+        }
+
+        
         if(allChatUsersOpen == true) {
             calcCenter(allChatUsersButton, allChatUsersDropdown, allChatUsersDropdownWidth, "down")
         }
@@ -339,6 +365,7 @@ import { afterUpdate } from 'svelte';
     }
     window.onresize = clientResize
 
+    
     let addUserModal
 
     const openAddUserModal = () => {
@@ -400,14 +427,16 @@ import { afterUpdate } from 'svelte';
             navMenuOpenIcon.style.display = "none"
             navMenuCloseIcon.style.display = "block"
             sidebar.style.display = "block"
+            calcCenter(userSettingsIcon, userSettingsPopup, userSettingsPopupWidth, "up")
         } else {
             navMenuOpenIcon.style.display = "block"
             navMenuCloseIcon.style.display = "none"
             sidebar.style.display = "none"
             userSettingsPopup.style.display = "none";
+            userSettingsOpen = false
         }
     }
-
+    
 </script>
 
 
@@ -561,15 +590,17 @@ import { afterUpdate } from 'svelte';
             {#if $currentChannel}
                 <div class="curC-nav">
                     <div class="curC-info">
-                        <h3 class="curC-name">{$currentChannel.channel_name}</h3>
+                        <h3 class="curC-name">{truncateString($currentChannel.channel_name, 29)}</h3>
                         <div class="curC-users"
                         bind:this={allChatUsersButton} 
                             on:click={(e) => openUsersDropdown(e)}
                         >
                             <div class="user-avatars">
-                                {#each $allUsers as user}
+                                {#each $allUsers as user, i}
                                     {#if $currentChannel.allowed_users != null && $currentChannel.allowed_users.includes(user.id) || $currentChannel.created_by == user.id}
-                                        <img class="chat-avatar" src="{user.userdata.avatar_url}" alt="channel user avatar">
+                                        {#if i < maxUserAvatars}
+                                            <img class="chat-avatar" src="{user.userdata.avatar_url}" alt="channel user avatar">
+                                        {/if}
                                     {/if}
                                 {/each}
                                 
@@ -588,6 +619,10 @@ import { afterUpdate } from 'svelte';
                     </div>
                 </div>
                 <div class="chat" bind:this={messageContainer}>
+                    <div class="chat-start-message">
+                        <h2>Det här är början av detta chattrum.</h2>
+                        <p>Startdatum: {getDate($currentChannel.inserted_at)}</p>
+                    </div>
                     {#each $channelMessages as message, i}
                         {#if i == 0 || getDate(message.inserted_at) != getDate($channelMessages[i-1].inserted_at)}
                             <div class="date-line">
@@ -612,7 +647,7 @@ import { afterUpdate } from 'svelte';
                                     </div>
                                 </div>
                                 <div class="message-popups">
-                                    <div class="popup edit-pen">
+                                    <div class="popup edit-pen" on:click={() => updateAMessage(message.message, message.id, message.user_id.id, currentUser.id)}>
                                         <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M491 1536l91-91-235-235-91 91v107h128v128h107zm523-928q0-22-22-22-10 0-17 7l-542 542q-7 7-7 17 0 22 22 22 10 0 17-7l542-542q7-7 7-17zm-54-192l416 416-832 832h-416v-416zm683 96q0 53-37 90l-166 166-416-416 166-165q36-38 90-38 53 0 91 38l235 234q37 39 37 91z"/></svg>
                                     </div>
                                     <div class="popup trashcan" on:click={() => deleteMessage(message.id, message.user_id.id, currentUser.id)}>
@@ -637,27 +672,28 @@ import { afterUpdate } from 'svelte';
                                 </div>
                             </div>
                         {/if}
-                        <!-- {#if true}
-                            <div class="date-line"></div>
-                        {/if} -->
+                    {:else}
+                        <div class="no-messages">
+                            <h3>Det finns inga meddelanden i denna chatt.</h3>
+                        </div>
                     {/each}
                 </div>
                 <div class="chat-input-container">
                     <div class="input-formats">
                         <div id="bold-icon" class="format-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 1792 1792"><path d="M747 1521q74 32 140 32 376 0 376-335 0-114-41-180-27-44-61.5-74t-67.5-46.5-80.5-25-84-10.5-94.5-2q-73 0-101 10 0 53-.5 159t-.5 158q0 8-1 67.5t-.5 96.5 4.5 83.5 12 66.5zm-14-746q42 7 109 7 82 0 143-13t110-44.5 74.5-89.5 25.5-142q0-70-29-122.5t-79-82-108-43.5-124-14q-50 0-130 13 0 50 4 151t4 152q0 27-.5 80t-.5 79q0 46 1 69zm-541 889l2-94q15-4 85-16t106-27q7-12 12.5-27t8.5-33.5 5.5-32.5 3-37.5.5-34v-65.5q0-982-22-1025-4-8-22-14.5t-44.5-11-49.5-7-48.5-4.5-30.5-3l-4-83q98-2 340-11.5t373-9.5q23 0 68 .5t68 .5q70 0 136.5 13t128.5 42 108 71 74 104.5 28 137.5q0 52-16.5 95.5t-39 72-64.5 57.5-73 45-84 40q154 35 256.5 134t102.5 248q0 100-35 179.5t-93.5 130.5-138 85.5-163.5 48.5-176 14q-44 0-132-3t-132-3q-106 0-307 11t-231 12z"/></svg>
+                            <!-- <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 1792 1792"><path d="M747 1521q74 32 140 32 376 0 376-335 0-114-41-180-27-44-61.5-74t-67.5-46.5-80.5-25-84-10.5-94.5-2q-73 0-101 10 0 53-.5 159t-.5 158q0 8-1 67.5t-.5 96.5 4.5 83.5 12 66.5zm-14-746q42 7 109 7 82 0 143-13t110-44.5 74.5-89.5 25.5-142q0-70-29-122.5t-79-82-108-43.5-124-14q-50 0-130 13 0 50 4 151t4 152q0 27-.5 80t-.5 79q0 46 1 69zm-541 889l2-94q15-4 85-16t106-27q7-12 12.5-27t8.5-33.5 5.5-32.5 3-37.5.5-34v-65.5q0-982-22-1025-4-8-22-14.5t-44.5-11-49.5-7-48.5-4.5-30.5-3l-4-83q98-2 340-11.5t373-9.5q23 0 68 .5t68 .5q70 0 136.5 13t128.5 42 108 71 74 104.5 28 137.5q0 52-16.5 95.5t-39 72-64.5 57.5-73 45-84 40q154 35 256.5 134t102.5 248q0 100-35 179.5t-93.5 130.5-138 85.5-163.5 48.5-176 14q-44 0-132-3t-132-3q-106 0-307 11t-231 12z"/></svg> -->
                         </div>
                         <div id="italic-icon" class="format-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 1792 1792"><path d="M384 1662l17-85q22-7 61.5-16.5t72-19 59.5-23.5q28-35 41-101 1-7 62-289t114-543.5 52-296.5v-25q-24-13-54.5-18.5t-69.5-8-58-5.5l19-103q33 2 120 6.5t149.5 7 120.5 2.5q48 0 98.5-2.5t121-7 98.5-6.5q-5 39-19 89-30 10-101.5 28.5t-108.5 33.5q-8 19-14 42.5t-9 40-7.5 45.5-6.5 42q-27 148-87.5 419.5t-77.5 355.5q-2 9-13 58t-20 90-16 83.5-6 57.5l1 18q17 4 185 31-3 44-16 99-11 0-32.5 1.5t-32.5 1.5q-29 0-87-10t-86-10q-138-2-206-2-51 0-143 9t-121 11z"/></svg>
+                            <!-- <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 1792 1792"><path d="M384 1662l17-85q22-7 61.5-16.5t72-19 59.5-23.5q28-35 41-101 1-7 62-289t114-543.5 52-296.5v-25q-24-13-54.5-18.5t-69.5-8-58-5.5l19-103q33 2 120 6.5t149.5 7 120.5 2.5q48 0 98.5-2.5t121-7 98.5-6.5q-5 39-19 89-30 10-101.5 28.5t-108.5 33.5q-8 19-14 42.5t-9 40-7.5 45.5-6.5 42q-27 148-87.5 419.5t-77.5 355.5q-2 9-13 58t-20 90-16 83.5-6 57.5l1 18q17 4 185 31-3 44-16 99-11 0-32.5 1.5t-32.5 1.5q-29 0-87-10t-86-10q-138-2-206-2-51 0-143 9t-121 11z"/></svg> -->
                         </div>
                         <div id="o-list" class="format-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 1792 1792"><path d="M381 1620q0 80-54.5 126t-135.5 46q-106 0-172-66l57-88q49 45 106 45 29 0 50.5-14.5t21.5-42.5q0-64-105-56l-26-56q8-10 32.5-43.5t42.5-54 37-38.5v-1q-16 0-48.5 1t-48.5 1v53h-106v-152h333v88l-95 115q51 12 81 49t30 88zm2-627v159h-362q-6-36-6-54 0-51 23.5-93t56.5-68 66-47.5 56.5-43.5 23.5-45q0-25-14.5-38.5t-39.5-13.5q-46 0-81 58l-85-59q24-51 71.5-79.5t105.5-28.5q73 0 123 41.5t50 112.5q0 50-34 91.5t-75 64.5-75.5 50.5-35.5 52.5h127v-60h105zm1409 319v192q0 13-9.5 22.5t-22.5 9.5h-1216q-13 0-22.5-9.5t-9.5-22.5v-192q0-14 9-23t23-9h1216q13 0 22.5 9.5t9.5 22.5zm-1408-899v99h-335v-99h107q0-41 .5-121.5t.5-121.5v-12h-2q-8 17-50 54l-71-76 136-127h106v404h108zm1408 387v192q0 13-9.5 22.5t-22.5 9.5h-1216q-13 0-22.5-9.5t-9.5-22.5v-192q0-14 9-23t23-9h1216q13 0 22.5 9.5t9.5 22.5zm0-512v192q0 13-9.5 22.5t-22.5 9.5h-1216q-13 0-22.5-9.5t-9.5-22.5v-192q0-13 9.5-22.5t22.5-9.5h1216q13 0 22.5 9.5t9.5 22.5z"/></svg>
+                            <!-- <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 1792 1792"><path d="M381 1620q0 80-54.5 126t-135.5 46q-106 0-172-66l57-88q49 45 106 45 29 0 50.5-14.5t21.5-42.5q0-64-105-56l-26-56q8-10 32.5-43.5t42.5-54 37-38.5v-1q-16 0-48.5 1t-48.5 1v53h-106v-152h333v88l-95 115q51 12 81 49t30 88zm2-627v159h-362q-6-36-6-54 0-51 23.5-93t56.5-68 66-47.5 56.5-43.5 23.5-45q0-25-14.5-38.5t-39.5-13.5q-46 0-81 58l-85-59q24-51 71.5-79.5t105.5-28.5q73 0 123 41.5t50 112.5q0 50-34 91.5t-75 64.5-75.5 50.5-35.5 52.5h127v-60h105zm1409 319v192q0 13-9.5 22.5t-22.5 9.5h-1216q-13 0-22.5-9.5t-9.5-22.5v-192q0-14 9-23t23-9h1216q13 0 22.5 9.5t9.5 22.5zm-1408-899v99h-335v-99h107q0-41 .5-121.5t.5-121.5v-12h-2q-8 17-50 54l-71-76 136-127h106v404h108zm1408 387v192q0 13-9.5 22.5t-22.5 9.5h-1216q-13 0-22.5-9.5t-9.5-22.5v-192q0-14 9-23t23-9h1216q13 0 22.5 9.5t9.5 22.5zm0-512v192q0 13-9.5 22.5t-22.5 9.5h-1216q-13 0-22.5-9.5t-9.5-22.5v-192q0-13 9.5-22.5t22.5-9.5h1216q13 0 22.5 9.5t9.5 22.5z"/></svg> -->
                         </div>
                         <div id="u-icon" class="format-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 1792 1792"><path d="M384 1408q0 80-56 136t-136 56-136-56-56-136 56-136 136-56 136 56 56 136zm0-512q0 80-56 136t-136 56-136-56-56-136 56-136 136-56 136 56 56 136zm1408 416v192q0 13-9.5 22.5t-22.5 9.5h-1216q-13 0-22.5-9.5t-9.5-22.5v-192q0-13 9.5-22.5t22.5-9.5h1216q13 0 22.5 9.5t9.5 22.5zm-1408-928q0 80-56 136t-136 56-136-56-56-136 56-136 136-56 136 56 56 136zm1408 416v192q0 13-9.5 22.5t-22.5 9.5h-1216q-13 0-22.5-9.5t-9.5-22.5v-192q0-13 9.5-22.5t22.5-9.5h1216q13 0 22.5 9.5t9.5 22.5zm0-512v192q0 13-9.5 22.5t-22.5 9.5h-1216q-13 0-22.5-9.5t-9.5-22.5v-192q0-13 9.5-22.5t22.5-9.5h1216q13 0 22.5 9.5t9.5 22.5z"/></svg>
+                            <!-- <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 1792 1792"><path d="M384 1408q0 80-56 136t-136 56-136-56-56-136 56-136 136-56 136 56 56 136zm0-512q0 80-56 136t-136 56-136-56-56-136 56-136 136-56 136 56 56 136zm1408 416v192q0 13-9.5 22.5t-22.5 9.5h-1216q-13 0-22.5-9.5t-9.5-22.5v-192q0-13 9.5-22.5t22.5-9.5h1216q13 0 22.5 9.5t9.5 22.5zm-1408-928q0 80-56 136t-136 56-136-56-56-136 56-136 136-56 136 56 56 136zm1408 416v192q0 13-9.5 22.5t-22.5 9.5h-1216q-13 0-22.5-9.5t-9.5-22.5v-192q0-13 9.5-22.5t22.5-9.5h1216q13 0 22.5 9.5t9.5 22.5zm0-512v192q0 13-9.5 22.5t-22.5 9.5h-1216q-13 0-22.5-9.5t-9.5-22.5v-192q0-13 9.5-22.5t22.5-9.5h1216q13 0 22.5 9.5t9.5 22.5z"/></svg> -->
                         </div>
                         <div id="link-icon" class="format-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1520 1216q0-40-28-68l-208-208q-28-28-68-28-42 0-72 32 3 3 19 18.5t21.5 21.5 15 19 13 25.5 3.5 27.5q0 40-28 68t-68 28q-15 0-27.5-3.5t-25.5-13-19-15-21.5-21.5-18.5-19q-33 31-33 73 0 40 28 68l206 207q27 27 68 27 40 0 68-26l147-146q28-28 28-67zm-703-705q0-40-28-68l-206-207q-28-28-68-28-39 0-68 27l-147 146q-28 28-28 67 0 40 28 68l208 208q27 27 68 27 42 0 72-31-3-3-19-18.5t-21.5-21.5-15-19-13-25.5-3.5-27.5q0-40 28-68t68-28q15 0 27.5 3.5t25.5 13 19 15 21.5 21.5 18.5 19q33-31 33-73zm895 705q0 120-85 203l-147 146q-83 83-203 83-121 0-204-85l-206-207q-83-83-83-203 0-123 88-209l-88-88q-86 88-208 88-120 0-204-84l-208-208q-84-84-84-204t85-203l147-146q83-83 203-83 121 0 204 85l206 207q83 83 83 203 0 123-88 209l88 88q86-88 208-88 120 0 204 84l208 208q84 84 84 204z"/></svg>
+                            <!-- <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1520 1216q0-40-28-68l-208-208q-28-28-68-28-42 0-72 32 3 3 19 18.5t21.5 21.5 15 19 13 25.5 3.5 27.5q0 40-28 68t-68 28q-15 0-27.5-3.5t-25.5-13-19-15-21.5-21.5-18.5-19q-33 31-33 73 0 40 28 68l206 207q27 27 68 27 40 0 68-26l147-146q28-28 28-67zm-703-705q0-40-28-68l-206-207q-28-28-68-28-39 0-68 27l-147 146q-28 28-28 67 0 40 28 68l208 208q27 27 68 27 42 0 72-31-3-3-19-18.5t-21.5-21.5-15-19-13-25.5-3.5-27.5q0-40 28-68t68-28q15 0 27.5 3.5t25.5 13 19 15 21.5 21.5 18.5 19q33-31 33-73zm895 705q0 120-85 203l-147 146q-83 83-203 83-121 0-204-85l-206-207q-83-83-83-203 0-123 88-209l-88-88q-86 88-208 88-120 0-204-84l-208-208q-84-84-84-204t85-203l147-146q83-83 203-83 121 0 204 85l206 207q83 83 83 203 0 123-88 209l88 88q86-88 208-88 120 0 204 84l208 208q84 84 84 204z"/></svg> -->
                         </div>
                     </div>
                     <div class="input-and-buttons">

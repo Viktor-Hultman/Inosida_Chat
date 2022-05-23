@@ -399,7 +399,7 @@ button:disabled {
 	margin: 15% auto; /* 15% from the top and centered */
 	padding: 20px;
 	border: 1px solid #888;
-	width: 80%; /* Could be more or less, depending on screen size */
+	width: 500px;
 	border-radius: 5px;
 }
 .users-modal-content .text-close {
@@ -468,6 +468,10 @@ button:disabled {
 	color: rgba(0, 0, 0, 0.8);
 }
 
+.curC-name {
+	max-width: 150px;
+}
+
 .curC-users {
 	min-width: 30px;
 	display: flex;
@@ -525,6 +529,22 @@ button:disabled {
 	padding: 20px 0px;
 }
 
+.chat-start-message {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	margin-bottom: 10px;
+	padding: 0px 10px;
+}
+
+.no-messages {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	margin-bottom: 10px;
+	padding: 0px 10px;
+}
+
 .date-line {
 	display: flex;
 	align-items: center;
@@ -550,6 +570,7 @@ button:disabled {
 	align-items: flex-start;
 	justify-content: space-between;
 	margin-bottom: 10px;
+	position: relative;
 }
 
 .message:hover {
@@ -584,6 +605,8 @@ button:disabled {
 
 .message-popups {
 	display: none;
+	position: absolute;
+	right: 10px;
 }
 
 .message-popups .edit-pen {
@@ -632,7 +655,6 @@ button:disabled {
 	display: flex;
 	margin: 5px 0px;
 }
-
 .format-icon {
 	min-width: 24px;
 	height: 24px;
@@ -643,10 +665,10 @@ button:disabled {
 	margin-right: 12px;
 	border-radius: 5px;
 }
-.format-icon:hover {
+/* .format-icon:hover {
 	cursor: pointer;
 	background: rgba(0,0,0,0.12);
-}
+} */
 
 .input-and-buttons {
 	display: flex;
@@ -701,7 +723,7 @@ button:disabled {
 
 .message-buttons-mobile {
 	width: 50px;
-	display: flex;
+	display: none;
 	align-items: center;
 	justify-content: flex-end;
 }
@@ -810,6 +832,10 @@ pre {
 		display: none;
 	}
 
+	.message-buttons-mobile {
+		display: flex;
+	}
+
 	.message-input-field {
 		width: calc(100% - 50px);
 	}
@@ -825,4 +851,25 @@ pre {
 	.user-settings-popup {
 		z-index: 501;
 	}
+}
+
+@media (max-width: 600px) {
+
+	.user-avatars {
+		display: none;
+	}
+
+	.user-nums {
+		margin: 0px 10px;
+	}
+
+	.users-modal-content {
+		width: 80%;
+	}
+
+	.prompt-modal-content {
+		width: 80%; 
+	}
+	
+	
 }
