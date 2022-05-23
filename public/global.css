@@ -55,10 +55,6 @@ button:disabled {
 	color: #999;
 }
 
-/* button:focus {
-	border-color: #666;
-} */
-
 
 .disable-text-select {
     user-select: none; /* supported by Chrome and Opera */
@@ -84,6 +80,29 @@ button:disabled {
 	justify-content: center;
 }
 
+.nav-items {
+	height: 100%;
+	width: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.nav-item {
+	height: 30px;
+	width: 30px;
+	color: white;
+	display: none;
+	padding: 10px;
+}
+.nav-item:hover {
+	cursor: pointer;
+}
+
+.no-pointer {
+	pointer-events: none;
+}
+
 .content {
 	display: flex;
 	height:calc(100% - 60px);
@@ -93,7 +112,6 @@ button:disabled {
 .sidebar {
 	display: flex;
 	flex-direction: column;
-	/* justify-content: space-between; */
 	height: 100%;
 	width: 300px;
 	background: #090F42;
@@ -650,7 +668,7 @@ button:disabled {
 	justify-content: space-evenly;
 }
 
-.send-button {
+.message-buttons .send-button {
 	background-color: #38394A;
 	color: #DEDEDE;
 	height: 40px;
@@ -659,23 +677,61 @@ button:disabled {
 	/* margin-right: 20px; */
 	pointer-events: none;
 }
-
-.send-button-active {
+.message-buttons .send-button-active {
 	background-color: #000852;
 	color: #fff;
 	pointer-events: initial;
 }
-.send-button-active:hover {
+.message-buttons .send-button-active:hover {
 	cursor: pointer;
 	background-color: #000a56;
 	box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
 }
-.send-button-active:focus {
+.message-buttons .send-button-active:focus {
 	cursor: pointer;
 	background-color: #000c65;
 	box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
 }
-.send-button-active:active {
+.message-buttons .send-button-active:active {
+	cursor: pointer;
+	border-color: #bababa;
+	background-color: #000c65;
+	box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
+}
+
+.message-buttons-mobile {
+	width: 50px;
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+}
+
+.message-buttons-mobile .send-button {
+	background-color: #38394A;
+	color: #DEDEDE;
+	height: 40px;
+	width: 40px;
+	border-radius: 10px;
+	padding: 10px 10px;
+	/* margin-right: 20px; */
+	pointer-events: none;
+}
+.message-buttons-mobile .send-button-active {
+	background-color: #000852;
+	color: #fff;
+	pointer-events: initial;
+}
+.message-buttons-mobile .send-button-active:hover {
+	cursor: pointer;
+	background-color: #000a56;
+	box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
+}
+.message-buttons-mobile .send-button-active:focus {
+	cursor: pointer;
+	background-color: #000c65;
+	box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
+}
+.message-buttons-mobile .send-button-active:active {
 	cursor: pointer;
 	border-color: #bababa;
 	background-color: #000c65;
@@ -721,12 +777,33 @@ pre {
 
 
 @media (max-width: 768px) {
+
+	.nav-items {
+		justify-content: space-between;
+	}
+
+	.nav-item {
+		display: block;
+	}
+
 	.sidebar {
+		position: absolute;
 		display: none;
+		height: calc(100% - 60px);
+		top: 60px;
+		z-index: 500;
 	}
 
 	.curC {
 		width: 100%;
+	}
+
+	.curC-nav {
+		padding: 0px 10px;
+	}
+
+	.message {
+		padding: 0px 10px;
 	}
 
 	.message-buttons {
@@ -734,10 +811,18 @@ pre {
 	}
 
 	.message-input-field {
-		width: 100%;
+		width: calc(100% - 50px);
 	}
 
-	/* .chat {
-		
-	} */
+	.chat-input-container{
+		padding: 0px 10px;
+	}
+
+	.chat {
+		padding: 10px 0px;
+	}
+
+	.user-settings-popup {
+		z-index: 501;
+	}
 }
