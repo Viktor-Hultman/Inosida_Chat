@@ -108,14 +108,17 @@ import { afterUpdate } from 'svelte';
     }
 
     let sendButton
+    let sendButtonMobile
 
     const checkInputVal = (e) => {
         if(e.target.value != ""){
             sendButton.classList.add("send-button-active")
+            sendButtonMobile.classList.add("send-button-active")
         } 
 
         if(e.target.value == ""){
             sendButton.classList.remove("send-button-active")
+            sendButtonMobile.classList.remove("send-button-active")
         }
     }
     
@@ -131,6 +134,7 @@ import { afterUpdate } from 'svelte';
             addMessage(message, channel_id, currentUser.id)
             messageInputVal = "";
             sendButton.classList.remove("send-button-active")
+            sendButtonMobile.classList.remove("send-button-active")
             event.preventDefault();
             return
         } else if (event.keyCode === 13){
@@ -148,6 +152,8 @@ import { afterUpdate } from 'svelte';
         addMessage(message, channel_id, currentUser.id)
         messageInputVal = ""; 
         sendButton.classList.remove("send-button-active")
+        sendButtonMobile.classList.remove("send-button-active")
+        
     }
 
     
@@ -330,9 +336,10 @@ import { afterUpdate } from 'svelte';
     }
     console.log(maxUserAvatars)
     
-
+    //Function that runs when the window is resized
     const clientResize = () => {
         //When the window is resized
+
         if(window.innerWidth > 768) {
             sidebar.style.display = ""
             navMenuOpenIcon.style.display = "block"
@@ -351,7 +358,6 @@ import { afterUpdate } from 'svelte';
             maxUserAvatars = 10
         }
 
-        
         if(allChatUsersOpen == true) {
             calcCenter(allChatUsersButton, allChatUsersDropdown, allChatUsersDropdownWidth, "down")
         }
@@ -363,6 +369,7 @@ import { afterUpdate } from 'svelte';
         }
         // console.log("no resize")
     }
+    
     window.onresize = clientResize
 
     
@@ -378,12 +385,14 @@ import { afterUpdate } from 'svelte';
         }
     }
 
+    //Ref for the modal when removing users
     let removeUserModal
 
-    const openRemoveUserModal = () => {
+    
+    const openRemoveUserModal = () => { //Func for just "opening" the modal
         removeUserModal.style.display = "block"
     }
-    const closeRemoveUserModal = (e) => {
+    const closeRemoveUserModal = (e) => { //Func that checks if the user clicked on the modal background, which "closes" the modal 
         if((e.target.nodeName != "path" && e.target.nodeName != "svg") && e.target.className.includes("modal-background")){
             removeUserModal.style.display = "none"
         }
@@ -603,7 +612,6 @@ import { afterUpdate } from 'svelte';
                                         {/if}
                                     {/if}
                                 {/each}
-                                
                             </div>
                             {#if $currentChannel.allowed_users != null}
                                 <p class="user-nums">{$currentChannel.allowed_users.length + 1}</p>
@@ -721,7 +729,7 @@ import { afterUpdate } from 'svelte';
                         </div>
                         <div class="message-buttons-mobile">
                             <button class="send-button disable-text-select"
-                            bind:this={sendButton}
+                            bind:this={sendButtonMobile}
                             on:click={(e) => removeFocus(e)}
                             on:click={(e) => submitOnButton(e, messageInputVal, $currentChannel.id)}
                             >
