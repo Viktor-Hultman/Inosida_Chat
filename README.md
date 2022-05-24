@@ -2,6 +2,8 @@
 
 Inosida_Chat is an internal chat service that I am currently creating for [Inosida Webbyrå](https://inosida.se/). This project is produced as my thesis at [KYH](https://kyh.se/).
 
+Here you can find the demo version for this project: [Demo](https://inosida-chat.surge.sh/)
+
 ## Description
 
 This project was made as an internal service for [Inosida Webbyrå](https://inosida.se/).
@@ -15,6 +17,6 @@ This project was used togheter with a [Supabase](https://app.supabase.io/) datab
 **This project includes**
 - No sign-up, only a simple login using a Google account is needed.
 - Creating, updating and deleting your channels and messages.
-- Invite any user to your channels that has logged into the webbapp.
+- Invite any user to your channels that has logged into the web app.
 - Only the user that has created a channel or a message in a channel can update or delete them. 
 
