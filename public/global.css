@@ -55,14 +55,14 @@ button:disabled {
 	color: #999;
 }
 
-
-.disable-text-select {
-    user-select: none; /* supported by Chrome and Opera */
-   -webkit-user-select: none; /* Safari */
-   -khtml-user-select: none; /* Konqueror HTML */
-   -moz-user-select: none; /* Firefox */
-   -ms-user-select: none; /* Internet Explorer/Edge */
-}
+.noselect {
+	-webkit-touch-callout: none; /* iOS Safari */
+	-webkit-user-select: none; /* Safari */
+	-khtml-user-select: none; /* Konqueror HTML */
+	-moz-user-select: none; /* Old versions of Firefox */
+	-ms-user-select: none; /* Internet Explorer/Edge */
+	user-select: none; /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
+  }
 
 
 .chat-page {
@@ -172,6 +172,15 @@ button:disabled {
 	color: white;
 }
 
+.channels-message {
+	margin: 20px;
+}
+
+.channels-message-mobile {
+	margin: 20px;
+	text-align: center;
+}
+
 .channel {
 	height: 50px;
 	margin: 5px 0px 5px 0px;
@@ -220,7 +229,9 @@ button:disabled {
 	height: 20px;
 	color: inherit;
 	padding: 10px;
+	position: relative;
 }
+
 .setting-icon:hover {
 	color: rgba(255, 255, 255, 0.6);
 	cursor: pointer;
@@ -298,12 +309,13 @@ button:disabled {
 	border: 1px solid #BBBBBB;
 	background: #f3f3f3;
 	border-radius: 5px;
-	display: none; 
-	top: -20000px;
-	padding: 10px 10px 5px 10px;
+	display: none;
+	top: -20000px; 
+	padding: 5px;
 }
 .all-chat-users-dropdown img {
 	margin-right: 5px;
+	margin-bottom: 2px;
 }
 .all-chat-users-dropdown h4 {
 	margin-bottom: 5px;
@@ -321,8 +333,9 @@ button:disabled {
 	background: #f3f3f3;
 	border-radius: 5px;
 	display: none; 
-	top: -20000px;
+	top: 45px;
 	padding-top: 5px;
+	width: 180px;
 }
 .chat-settings-dropdown .setting-text {
 	padding: 2.5px 10px;
@@ -357,7 +370,8 @@ button:disabled {
 	background: #f3f3f3;
 	border-radius: 5px;
 	display: none; 
-	top: -20000px;
+	width: 90px;
+	top: -40px;
 	padding: 5px 0px;
 }
 .user-settings-popup .setting-text {
@@ -607,6 +621,7 @@ button:disabled {
 	display: none;
 	position: absolute;
 	right: 10px;
+	z-index: 2;
 }
 
 .message-popups .edit-pen {
@@ -622,20 +637,21 @@ button:disabled {
     border: 1px solid #BBBBBB;
     border-radius: 5px;
     padding: 4px;
+	z-index: 2;
 }
 .message-popups .popup:hover {
 	cursor: pointer;
-	background-color: rgba(0,0,0,0.04); 
+	background: #f3f3f3df; 
 	box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
 }
 .message-popups .popup:focus {
 	cursor: pointer;
-	background-color: rgba(0,0,0,0.12); 
+	background: #f3f3f3c3; 
 	box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
 }
 .message-popups .popup:active {
 	cursor: pointer;
-	background-color: rgba(0,0,0,0.12); 
+	background: #f3f3f3c3; 
 	box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
 }
 
@@ -711,6 +727,7 @@ button:disabled {
 }
 .message-buttons .send-button-active:focus {
 	cursor: pointer;
+	border: 2px solid black;
 	background-color: #000c65;
 	box-shadow: 0 1px 1px 0 rgb(66 66 66 / 8%), 0 1px 3px 0.5px rgb(66 66 66 / 16%);
 }
@@ -795,6 +812,7 @@ pre {
 	white-space: -pre-wrap;      /* Opera 4-6 */
 	white-space: -o-pre-wrap;    /* Opera 7 */
 	word-wrap: break-word;
+	word-break: break-all;
 }
 
 
@@ -855,10 +873,6 @@ pre {
 
 @media (max-width: 600px) {
 
-	.user-avatars {
-		display: none;
-	}
-
 	.user-nums {
 		margin: 0px 10px;
 	}
@@ -870,6 +884,5 @@ pre {
 	.prompt-modal-content {
 		width: 80%; 
 	}
-	
-	
+		
 }

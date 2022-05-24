@@ -44,8 +44,6 @@ import { afterUpdate } from 'svelte';
         .replace(/--+/g, '-') // Replace multiple - with single -
         // .replace(/^-+/, '') // Trim - from start of text
         // .replace(/-+$/, '') // Trim - from end of text
-
-        console.log(result)
         return result
     }
 
@@ -61,12 +59,11 @@ import { afterUpdate } from 'svelte';
     }
 
     const removeAUserfromChannel = async (channel_id, user_id) => {
-            getChannelToRemoveUser(channel_id, user_id )
+        getChannelToRemoveUser(channel_id, user_id )
     }
 
     const updateAMessage = async (message, message_id, message_user_id, user_id) => {
         const newMessage = prompt("Update your previous message", message)
-        
         if (newMessage) {
             updateMessage(newMessage, message_id, message_user_id, user_id)
         }
@@ -81,26 +78,28 @@ import { afterUpdate } from 'svelte';
 
     const openAChannel = async (event, channel_id) => {
         if(channel_id == $currentChannel.id){
-            return console.log("Channel already open");
+            return
         }
         if(event.target.nodeName != "DIV" && event.target.nodeName != "P"){
-            return console.log("You clicked something else than the channel div");
+            return
         }
         //Setting the id of the opened channel to local storage
         localStorage.setItem('lastOpenedChannel', channel_id)
-        chatSettinsDropdown.style.display = "none"
-        allChatUsersDropdown.style.display = "none"
+        if(chatSettinsDropdown != null) {
+            chatSettinsDropdown.style.display = "none"
+            allChatUsersDropdown.style.display = "none"
+        }
         openChannel(channel_id)
     }
 
-    const hideAChannel = async (channel_id, channel_user_id, user_id, user_hidden_channels) => {
-        const data = hideChannel(channel_id, channel_user_id, user_id, user_hidden_channels) 
-        if (data) {
-            loadChannels()
-        }
-    }
+    // const hideAChannel = async (channel_id, channel_user_id, user_id, user_hidden_channels) => {
+    //     const data = hideChannel(channel_id, channel_user_id, user_id, user_hidden_channels) 
+    //     if (data) {
+    //         loadChannels()
+    //     }
+    // }
 
-    const autoResize = (e) => {
+    const autoResizeChatInput = (e) => {
         // Måste fixa outo resize så att den ändrar höjden på inputfältet samt hela input containern
         // Ska bara höjas uppåt och inte flyttas nedåt.
         // e.target.style.height = 'auto';
@@ -127,9 +126,12 @@ import { afterUpdate } from 'svelte';
     const regex = /[^\n]/;
 
     const submitOnEnter = (event, message, channel_id) => {
-        // Trim whitespace from end of message
+        if(window.innerWidth < 786 && event.keyCode === 13){
+            return
+        }
+        // Todo:Trim whitespace from end of message
         if(event.shiftKey && event.keyCode === 13){
-            return console.log("Shift and enter is pressed")
+            return
         } else if (event.keyCode === 13 && regex.test(message)) {
             addMessage(message, channel_id, currentUser.id)
             messageInputVal = "";
@@ -148,37 +150,35 @@ import { afterUpdate } from 'svelte';
             event.preventDefault();
             return
         }
-        console.log(message.length, messageInputVal.length);
         addMessage(message, channel_id, currentUser.id)
         messageInputVal = ""; 
         sendButton.classList.remove("send-button-active")
         sendButtonMobile.classList.remove("send-button-active")
-        
     }
 
     
 
     let messageContainer
-    $: if($channelMessages) { //Checks for updates, and if channelMessages has changed then run the code
-        // console.log($channelMessages);
+    $: if($channelMessages != null && $channelMessages != false) { //Checks for updates, and if channelMessages has changed then run the code
             if($scrollTheChat) { // Checks if the scrollTheChat writable var is true
             setTimeout(() => { //Timeout to allow the message to be added before scrolling
-                console.log("Now the chat should scroll");
                 //Scrolling the "message container to the bottom smoothly"
                 messageContainer && messageContainer.scrollTo({top: messageContainer.scrollHeight, left: 0, behavior: 'smooth'})
+                //Placing the calcCenter func to run here for updating the usersdropdown when a user is added or removed for a channel
+                calcCenter(allChatUsersButton, allChatUsersDropdown, allChatUsersDropdownWidth, "down")
             }, 100)
 
         }
     }
 
 
-    $:if ($channels != null && localStorage.getItem('lastOpenedChannel') != null) {
+    $:if (($channels != null && $channels != false) && localStorage.getItem('lastOpenedChannel') != null) {
         // If the user is part of any channel and has selected a 
         // chat previous that is still logged in local storage
         // open that previous channel when page loads
         openLastOpenedChannel()
 
-    } else if ($channels != null && localStorage.getItem('lastOpenedChannel') == null) {
+    } else if (($channels != null && $channels != false) && localStorage.getItem('lastOpenedChannel') == null) {
         // Else if there is no previous opened channel logged,
         // open the "first" channel
         openChannel($channels[0].id)
@@ -195,8 +195,6 @@ import { afterUpdate } from 'svelte';
     }
 
     let dbUser = null
-
-    $: console.log($currentChannel);
 
     $: if($thisDBUser) {
         dbUser = $thisDBUser[0]
@@ -227,14 +225,10 @@ import { afterUpdate } from 'svelte';
     let allChatUsersButton
     
     let chatSettinsDropdown
-    let chatSettinsDropdownWidth
     let chatSettinsOpen = false
-    let chatSettinsIcon
 
     let userSettingsPopup
-    let userSettingsPopupWidth
     let userSettingsOpen = false
-    let userSettingsIcon
 
     const calcCenter = (target, elem, size, upOrDown) => {
         let leftPX
@@ -246,7 +240,6 @@ import { afterUpdate } from 'svelte';
         }
 
         if(upOrDown == "up") {
-            console.log("should popup");
             leftPX = ((target.offsetWidth / 2) - (size / 2) + target.offsetLeft)
             topPX = target.offsetTop - target.offsetHeight
 
@@ -259,7 +252,7 @@ import { afterUpdate } from 'svelte';
         elem.style.top = topPX + "px"
     }
 
-    const openUsersDropdown = () => {
+    const toggleUsersDropdown = () => {
         if(allChatUsersOpen == true) {
             allChatUsersDropdown.style.display = "none";
             allChatUsersOpen = false
@@ -280,40 +273,23 @@ import { afterUpdate } from 'svelte';
         allChatUsersOpen = true
     }
 
-    const openChatSettingsDropdown = () => {
+    const toggleChatSettingsDropdown = () => {//This dropdown is positioned using css only
         if(chatSettinsOpen == true) {
             chatSettinsDropdown.style.display = "none";
             chatSettinsOpen = false
             return
         }
-
         chatSettinsDropdown.style.display = "block";
         chatSettinsDropdown.style.zIndex = currentHighestZindex + 1
         currentHighestZindex = Number(chatSettinsDropdown.style.zIndex)
-
-        if(chatSettinsDropdownWidth == 0) {
-            setTimeout(() => { 
-                calcCenter(chatSettinsIcon, chatSettinsDropdown, chatSettinsDropdownWidth, "down")
-            }, 100)
-        } else {
-            calcCenter(chatSettinsIcon, chatSettinsDropdown, chatSettinsDropdownWidth, "down")
-        }
         chatSettinsOpen = true
     }
 
-    const openUserSettingsPopup = () => {
+    const toggleUserSettingsPopup = () => {//This dropdown is positioned using css only
         if(userSettingsOpen == true) {
             userSettingsPopup.style.display = "none";
             userSettingsOpen = false
             return
-        }
-
-        if(userSettingsPopupWidth == 0) {
-            setTimeout(() => { 
-                calcCenter(userSettingsIcon, userSettingsPopup, userSettingsPopupWidth, "up")
-            }, 50)
-        } else {
-            calcCenter(userSettingsIcon, userSettingsPopup, userSettingsPopupWidth, "up")
         }
         userSettingsPopup.style.display = "block";
         userSettingsOpen = true
@@ -329,12 +305,13 @@ import { afterUpdate } from 'svelte';
 
     // Checking for the window width to determine how many user avatars should be displayed
     // Running once when page loads
-    if (window.innerWidth < 900 && window.innerWidth > 768) {
+    if (window.innerWidth < 768) {
+        maxUserAvatars = 3
+    } else if (window.innerWidth < 900 && window.innerWidth > 768) {
         maxUserAvatars = 5
     } else {
         maxUserAvatars = 10
     }
-    console.log(maxUserAvatars)
     
     //Function that runs when the window is resized
     const clientResize = () => {
@@ -352,7 +329,9 @@ import { afterUpdate } from 'svelte';
         }
 
         // Checking for the window width to determine how many user avatars should be displayed
-        if (window.innerWidth < 900 && window.innerWidth > 768) {
+        if (window.innerWidth < 768) {
+            maxUserAvatars = 3
+        } else if (window.innerWidth < 900 && window.innerWidth > 768) {
             maxUserAvatars = 5
         } else {
             maxUserAvatars = 10
@@ -361,60 +340,62 @@ import { afterUpdate } from 'svelte';
         if(allChatUsersOpen == true) {
             calcCenter(allChatUsersButton, allChatUsersDropdown, allChatUsersDropdownWidth, "down")
         }
-        if(chatSettinsOpen == true) {
-            calcCenter(chatSettinsIcon, chatSettinsDropdown, chatSettinsDropdownWidth, "down")
-        }
-        if(userSettingsOpen == true) {
-            calcCenter(userSettingsIcon, userSettingsPopup, userSettingsPopupWidth, "up")
-        }
-        // console.log("no resize")
     }
     
     window.onresize = clientResize
 
     
     let addUserModal
+    let addUserSetting
 
     const openAddUserModal = () => {
         addUserModal.style.display = "block"
+        addUserModal.focus()
     }
     const closeAddUserModal = (e) => {
-        console.log(e.target.nodeName)
         if((e.target.nodeName != "path" && e.target.nodeName != "svg") && e.target.className.includes("modal-background")){
             addUserModal.style.display = "none"
+            addUserSetting.focus()
         }
+        
     }
 
     //Ref for the modal when removing users
     let removeUserModal
+    let removeUserSetting
 
-    
     const openRemoveUserModal = () => { //Func for just "opening" the modal
         removeUserModal.style.display = "block"
+        removeUserModal.focus()
     }
     const closeRemoveUserModal = (e) => { //Func that checks if the user clicked on the modal background, which "closes" the modal 
         if((e.target.nodeName != "path" && e.target.nodeName != "svg") && e.target.className.includes("modal-background")){
             removeUserModal.style.display = "none"
+            removeUserSetting.focus()
         }
     }
 
-    let areYouSurePrompt
-    let areYouSureText
+    let delChannelPrompt
+    let delChannelText
+    let delChannelSetting
 
-    const openAreYouSurePrompt = (text) => {
-        areYouSureText = text
-        areYouSurePrompt.style.display = "block"
+    const opendelChannelPrompt = (text) => {
+        delChannelText = text
+        delChannelPrompt.style.display = "block"
+        delChannelPrompt.focus()
     }
-    const closeAreYouSurePrompt = (e) => {
+    const closeDelChannelPrompt = (e) => {
         if (e.target.className.includes("modal-background")){
-            areYouSurePrompt.style.display = "none"
+            delChannelPrompt.style.display = "none"
+            delChannelSetting.focus()
         }
     }
     const yesDeleteChannel = () => {
         deleteChannel($currentChannel.id, $currentChannel.created_by, currentUser.id)
-        areYouSurePrompt.style.display = "none"
+        delChannelPrompt.style.display = "none"
         chatSettinsDropdown.style.display = "none"
         $currentChannel = false
+        delChannelSetting.focus()
     }
 
     const showMessageSettings = (e) => {
@@ -431,12 +412,10 @@ import { afterUpdate } from 'svelte';
     let sidebar
 
     const toggleSidebar = () => {
-        // console.log(sidebar.style.display == "")
         if(sidebar.style.display == "none" || sidebar.style.display == "") {
             navMenuOpenIcon.style.display = "none"
             navMenuCloseIcon.style.display = "block"
             sidebar.style.display = "block"
-            calcCenter(userSettingsIcon, userSettingsPopup, userSettingsPopupWidth, "up")
         } else {
             navMenuOpenIcon.style.display = "block"
             navMenuCloseIcon.style.display = "none"
@@ -446,40 +425,16 @@ import { afterUpdate } from 'svelte';
         }
     }
     
+    
 </script>
 
 
 <div class="chat-page">
-    <div class="all-chat-users-dropdown" bind:offsetWidth={allChatUsersDropdownWidth} bind:this={allChatUsersDropdown}>
-        <h4>Chattrummets användare</h4>
-        {#each $allUsers as user (user.id)}
-        {#if $currentChannel != false && $currentChannel.allowed_users != null && ($currentChannel.allowed_users.includes(user.id) || $currentChannel.created_by == user.id)}
-            <div class="chat-user">
-                <img class="chat-avatar" src="{user.userdata.avatar_url}" alt="channel user avatar">
-                <p>{truncateString(user.userdata.full_name, 20)}</p>
-            </div>
-        {/if}
-        {/each}
-    </div>
-    <div class="chat-settings-dropdown" bind:offsetWidth={chatSettinsDropdownWidth} bind:this={chatSettinsDropdown}>
-        <h4>Inställningar</h4>
-        <div class="line"></div>
-        <button class="setting-text" on:click={() => updateAChannelName($currentChannel.channel_name, $currentChannel.id, $currentChannel.created_by, currentUser.id)}>Ändra namn</button>
-        <div class="line"></div>
-        <button class="setting-text" on:click={() => openAddUserModal()}>Lägg till användare</button>
-        <div class="line"></div>
-        <button class="setting-text" on:click={() => openRemoveUserModal()}>Ta bort användare</button>
-        <div class="line"></div>
-        <button class="setting-text warning" on:click={() => openAreYouSurePrompt(`radera chattrummet: ${$currentChannel.channel_name}`)}>Radera detta chattrum</button>
-    </div>
-    <div class="user-settings-popup" bind:offsetWidth={userSettingsPopupWidth} bind:this={userSettingsPopup}>
-        <button class="setting-text" on:click={() => signOut()}>Logga ut</button>
-    </div>
-    <div class="modal-background" bind:this={addUserModal} on:click={(e) => closeAddUserModal(e)}>
+    <div class="modal-background" tabindex="-1" bind:this={addUserModal} on:click={(e) => closeAddUserModal(e)}>
         <div class="users-modal-content">
             <div class="text-close">
                 <h3>Klicka på ett plus för att lägga till en användare.</h3>
-                <div class="close-icon" tabindex="0" on:click={() => addUserModal.style.display = "none"}>
+                <div class="close-icon" tabindex="0" on:keypress={(e) => e.keyCode === 13 && (addUserModal.style.display = "none", addUserSetting.focus())} on:click={() => (addUserModal.style.display = "none", addUserSetting.focus())}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1490 1322q0 40-28 68l-136 136q-28 28-68 28t-68-28l-294-294-294 294q-28 28-68 28t-68-28l-136-136q-28-28-28-68t28-68l294-294-294-294q-28-28-28-68t28-68l136-136q28-28 68-28t68 28l294 294 294-294q28-28 68-28t68 28l136 136q28 28 28 68t-28 68l-294 294 294 294q28 28 28 68z"/></svg>
                 </div>
             </div>
@@ -490,7 +445,7 @@ import { afterUpdate } from 'svelte';
                 <div class="chat-user">
                     <img class="chat-avatar" src="{user.userdata.avatar_url}" alt="channel user avatar">
                     <p>{truncateString(user.userdata.full_name, 20)}</p>
-                    <div class="plus-icon" tabindex="0" on:click={(e) => addAUserToChannel($currentChannel.id, user.id)}>
+                    <div class="plus-icon" tabindex="0" on:keypress={(e) => e.keyCode === 13 && addAUserToChannel($currentChannel.id, user.id)} on:click={(e) => addAUserToChannel($currentChannel.id, user.id)}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1600 736v192q0 40-28 68t-68 28h-416v416q0 40-28 68t-68 28h-192q-40 0-68-28t-28-68v-416h-416q-40 0-68-28t-28-68v-192q0-40 28-68t68-28h416v-416q0-40 28-68t68-28h192q40 0 68 28t28 68v416h416q40 0 68 28t28 68z"/></svg>
                     </div>
                 </div>
@@ -500,11 +455,11 @@ import { afterUpdate } from 'svelte';
             </div>
         </div>
     </div>
-    <div class="modal-background" bind:this={removeUserModal} on:click={(e) => closeRemoveUserModal(e)}>
+    <div class="modal-background" tabindex="-1" bind:this={removeUserModal} on:click={(e) => closeRemoveUserModal(e)}>
         <div class="users-modal-content">
             <div class="text-close">
                 <h3>Klicka på ett minus för att ta bort en användare.</h3>
-                <div class="close-icon" tabindex="0" on:click={() => removeUserModal.style.display = "none"}>
+                <div class="close-icon" tabindex="0" on:keypress={(e) => e.keyCode === 13 && (removeUserModal.style.display = "none", removeUserSetting.focus())} on:click={() => (removeUserModal.style.display = "none", removeUserSetting.focus())}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1490 1322q0 40-28 68l-136 136q-28 28-68 28t-68-28l-294-294-294 294q-28 28-68 28t-68-28l-136-136q-28-28-28-68t28-68l294-294-294-294q-28-28-28-68t28-68l136-136q28-28 68-28t68 28l294 294 294-294q28-28 68-28t68 28l136 136q28 28 28 68t-28 68l-294 294 294 294q28 28 28 68z"/></svg>
                 </div>
             </div>
@@ -516,7 +471,7 @@ import { afterUpdate } from 'svelte';
                 <div class="chat-user">
                     <img class="chat-avatar" src="{user.userdata.avatar_url}" alt="channel user avatar">
                     <p>{truncateString(user.userdata.full_name, 20)}</p>
-                    <div class="plus-icon" tabindex="0" on:click={(e) => removeAUserfromChannel($currentChannel.id, user.id)}>
+                    <div class="plus-icon" tabindex="0" on:keypress={(e) => e.keyCode === 13 && removeAUserfromChannel($currentChannel.id, user.id)} on:click={(e) => removeAUserfromChannel($currentChannel.id, user.id)}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1600 736v192q0 40-28 68t-68 28h-1216q-40 0-68-28t-28-68v-192q0-40 28-68t68-28h1216q40 0 68 28t28 68z"/></svg>
                     </div>
                 </div>
@@ -527,18 +482,18 @@ import { afterUpdate } from 'svelte';
             </div>
         </div>
     </div>
-    <div class="modal-background" bind:this={areYouSurePrompt} on:click={(e) => closeAreYouSurePrompt(e)}>
+    <div class="modal-background" tabindex="-1" bind:this={delChannelPrompt} on:click={(e) => closeDelChannelPrompt(e)}>
         <div class="prompt-modal-content">
-            <h3>Är du säker på att du vill {areYouSureText} ?</h3>
+            <h3>Är du säker på att du vill {delChannelText} ?</h3>
             <div class="buttons">
                 <button class="yes-button button" on:click={() => yesDeleteChannel()}>JA</button>
-                <button class="no-button button" on:click={() => areYouSurePrompt.style.display = "none"}>NEJ</button>
+                <button class="no-button button" on:click={() => (delChannelPrompt.style.display = "none", delChannelSetting.focus())}>NEJ</button>
             </div>
         </div>
     </div>
     <nav class="navbar">
         <div class="nav-items">
-            <div class="nav-item" on:click={() => toggleSidebar()}>
+            <div tabindex="0" class="nav-item" on:keypress={(e) => e.keyCode === 13 && toggleSidebar()} on:click={() => toggleSidebar()}>
                 <svg bind:this={navMenuOpenIcon} xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1664 1344v128q0 26-19 45t-45 19h-1408q-26 0-45-19t-19-45v-128q0-26 19-45t45-19h1408q26 0 45 19t19 45zm0-512v128q0 26-19 45t-45 19h-1408q-26 0-45-19t-19-45v-128q0-26 19-45t45-19h1408q26 0 45 19t19 45zm0-512v128q0 26-19 45t-45 19h-1408q-26 0-45-19t-19-45v-128q0-26 19-45t45-19h1408q26 0 45 19t19 45z"/></svg>
                 <svg bind:this={navMenuCloseIcon} xmlns="http://www.w3.org/2000/svg" display="none" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1490 1322q0 40-28 68l-136 136q-28 28-68 28t-68-28l-294-294-294 294q-28 28-68 28t-68-28l-136-136q-28-28-28-68t28-68l294-294-294-294q-28-28-28-68t28-68l136-136q28-28 68-28t68 28l294 294 294-294q28-28 68-28t68 28l136 136q28 28 28 68t-28 68l-294 294 294 294q28 28 28 68z"/></svg>
             </div>
@@ -552,8 +507,8 @@ import { afterUpdate } from 'svelte';
         <div class="sidebar-modal">
             <div bind:this={sidebar} class="sidebar">
                 <div class="add-chat-section">
-                    <h3>Chattrum</h3>
-                    <div class="plus-icon" on:click={createNewChannel}>
+                    <h3>Chattrums</h3>
+                    <div tabindex="0" class="plus-icon" on:keypress={(e) => e.keyCode === 13 && createNewChannel()} on:click={() => createNewChannel()}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1600 736v192q0 40-28 68t-68 28h-416v416q0 40-28 68t-68 28h-192q-40 0-68-28t-28-68v-416h-416q-40 0-68-28t-28-68v-192q0-40 28-68t68-28h416v-416q0-40 28-68t68-28h192q40 0 68 28t28 68v416h416q40 0 68 28t28 68z"/></svg>
                     </div>
                 </div>
@@ -562,13 +517,13 @@ import { afterUpdate } from 'svelte';
                         {#each $channels as channel}
                             {#if dbUser && (dbUser.hidden_channels == null || !dbUser.hidden_channels.includes(channel.id))}
                             {#if channel.id == $currentChannel.id}
-                                <div class="channel activeCurrentChannel" on:click={(e) => openAChannel(e, channel.id)}>
+                                <div tabindex="0" class="channel activeCurrentChannel" on:keypress={(e) => e.keyCode === 13 && openAChannel(e, channel.id)} on:click={(e) => openAChannel(e, channel.id)}>
                                     <div class="channel-info">
                                         <p>{truncateString(channel.channel_name, 29)}</p>
                                     </div>
                                 </div>
                             {:else}
-                                <div class="channel" on:click={(e) => openAChannel(e, channel.id)}>
+                                <div tabindex="0" class="channel" on:keypress={(e) => e.keyCode === 13 && openAChannel(e, channel.id)} on:click={(e) => openAChannel(e, channel.id)}>
                                     <div class="channel-info">
                                         <p>{truncateString(channel.channel_name, 29)}</p>
                                     </div>
@@ -576,10 +531,14 @@ import { afterUpdate } from 'svelte';
                             {/if}
                             {/if}
                         {:else}
-                            <p>Du är för tillfället inte med i några chattrum.</p>
+                            <div class="channels-message">
+                                <p>Du är för tillfället inte med i några chattrum.</p>
+                                <br>
+                                <p>Testa att klicka på plus ikonen ovan för att skapa ett chattrum.</p>
+                            </div>
                         {/each}
                     {:else} 
-                        <p>Laddar in chattrum...</p>
+                        <p class="channels-message">Laddar in chattrum...</p>
                     {/if}
                 </div>
                 <div class="profile-container">
@@ -588,8 +547,11 @@ import { afterUpdate } from 'svelte';
                             <img class="current-user-avatar" src="{currentUser.user_metadata.avatar_url}" alt="current user avatar">
                             <p>{truncateString(currentUser.user_metadata.full_name, 29)}</p>
                         </div>
-                        <div class="setting-icon" bind:this={userSettingsIcon} on:click={(e) => openUserSettingsPopup(e)}>
+                        <div tabindex="0" class="setting-icon" on:keypress={(e) => e.keyCode === 13 && toggleUserSettingsPopup(e)} on:click={(e) => toggleUserSettingsPopup(e)}>
                             <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1152 896q0-106-75-181t-181-75-181 75-75 181 75 181 181 75 181-75 75-181zm512-109v222q0 12-8 23t-20 13l-185 28q-19 54-39 91 35 50 107 138 10 12 10 25t-9 23q-27 37-99 108t-94 71q-12 0-26-9l-138-108q-44 23-91 38-16 136-29 186-7 28-36 28h-222q-14 0-24.5-8.5t-11.5-21.5l-28-184q-49-16-90-37l-141 107q-10 9-25 9-14 0-25-11-126-114-165-168-7-10-7-23 0-12 8-23 15-21 51-66.5t54-70.5q-27-50-41-99l-183-27q-13-2-21-12.5t-8-23.5v-222q0-12 8-23t19-13l186-28q14-46 39-92-40-57-107-138-10-12-10-24 0-10 9-23 26-36 98.5-107.5t94.5-71.5q13 0 26 10l138 107q44-23 91-38 16-136 29-186 7-28 36-28h222q14 0 24.5 8.5t11.5 21.5l28 184q49 16 90 37l142-107q9-9 24-9 13 0 25 10 129 119 165 170 7 8 7 22 0 12-8 23-15 21-51 66.5t-54 70.5q26 50 41 98l183 28q13 2 21 12.5t8 23.5z"/></svg>
+                            <div class="user-settings-popup" bind:this={userSettingsPopup}>
+                                <button class="setting-text" on:click={() => signOut()}>Logga ut</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -600,13 +562,15 @@ import { afterUpdate } from 'svelte';
                 <div class="curC-nav">
                     <div class="curC-info">
                         <h3 class="curC-name">{truncateString($currentChannel.channel_name, 29)}</h3>
-                        <div class="curC-users"
-                        bind:this={allChatUsersButton} 
-                            on:click={(e) => openUsersDropdown(e)}
+                        <div tabindex="0" class="curC-users noselect"
+                            bind:this={allChatUsersButton} 
+                            on:keypress={(e) => e.keyCode === 13 && toggleUsersDropdown()}
+                            on:click={(e) => toggleUsersDropdown()}
                         >
                             <div class="user-avatars">
+                                <img class="chat-avatar" src="{currentUser.user_metadata.avatar_url}" alt="channel user avatar">
                                 {#each $allUsers as user, i}
-                                    {#if $currentChannel.allowed_users != null && $currentChannel.allowed_users.includes(user.id) || $currentChannel.created_by == user.id}
+                                    {#if $currentChannel.allowed_users != null && $currentChannel.allowed_users.includes(user.id) && $currentChannel.created_by != user.id}
                                         {#if i < maxUserAvatars}
                                             <img class="chat-avatar" src="{user.userdata.avatar_url}" alt="channel user avatar">
                                         {/if}
@@ -618,11 +582,33 @@ import { afterUpdate } from 'svelte';
                             {:else}
                                 <p class="user-nums">1</p>
                             {/if}
+                            <div class="all-chat-users-dropdown" bind:offsetWidth={allChatUsersDropdownWidth} bind:this={allChatUsersDropdown}>
+                                <h4>Chattrummets användare</h4>
+                                {#each $allUsers as user (user.id)}
+                                {#if $currentChannel != false && $currentChannel.allowed_users != null && ($currentChannel.allowed_users.includes(user.id) || $currentChannel.created_by == user.id)}
+                                    <div class="chat-user">
+                                        <img class="chat-avatar" src="{user.userdata.avatar_url}" alt="channel user avatar">
+                                        <p>{truncateString(user.userdata.full_name, 20)}</p>
+                                    </div>
+                                {/if}
+                                {/each}
+                            </div>
                         </div>
                         {#if $currentChannel.created_by == currentUser.id}
-                        <div class="setting-icon" bind:this={chatSettinsIcon} on:click={(e) => openChatSettingsDropdown(e)}>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1152 896q0-106-75-181t-181-75-181 75-75 181 75 181 181 75 181-75 75-181zm512-109v222q0 12-8 23t-20 13l-185 28q-19 54-39 91 35 50 107 138 10 12 10 25t-9 23q-27 37-99 108t-94 71q-12 0-26-9l-138-108q-44 23-91 38-16 136-29 186-7 28-36 28h-222q-14 0-24.5-8.5t-11.5-21.5l-28-184q-49-16-90-37l-141 107q-10 9-25 9-14 0-25-11-126-114-165-168-7-10-7-23 0-12 8-23 15-21 51-66.5t54-70.5q-27-50-41-99l-183-27q-13-2-21-12.5t-8-23.5v-222q0-12 8-23t19-13l186-28q14-46 39-92-40-57-107-138-10-12-10-24 0-10 9-23 26-36 98.5-107.5t94.5-71.5q13 0 26 10l138 107q44-23 91-38 16-136 29-186 7-28 36-28h222q14 0 24.5 8.5t11.5 21.5l28 184q49 16 90 37l142-107q9-9 24-9 13 0 25 10 129 119 165 170 7 8 7 22 0 12-8 23-15 21-51 66.5t-54 70.5q26 50 41 98l183 28q13 2 21 12.5t8 23.5z"/></svg>
-                        </div>
+                            <div tabindex="0" class="setting-icon" on:keypress={(e) => e.keyCode === 13 && toggleChatSettingsDropdown(e)} on:click={(e) => toggleChatSettingsDropdown(e)}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1152 896q0-106-75-181t-181-75-181 75-75 181 75 181 181 75 181-75 75-181zm512-109v222q0 12-8 23t-20 13l-185 28q-19 54-39 91 35 50 107 138 10 12 10 25t-9 23q-27 37-99 108t-94 71q-12 0-26-9l-138-108q-44 23-91 38-16 136-29 186-7 28-36 28h-222q-14 0-24.5-8.5t-11.5-21.5l-28-184q-49-16-90-37l-141 107q-10 9-25 9-14 0-25-11-126-114-165-168-7-10-7-23 0-12 8-23 15-21 51-66.5t54-70.5q-27-50-41-99l-183-27q-13-2-21-12.5t-8-23.5v-222q0-12 8-23t19-13l186-28q14-46 39-92-40-57-107-138-10-12-10-24 0-10 9-23 26-36 98.5-107.5t94.5-71.5q13 0 26 10l138 107q44-23 91-38 16-136 29-186 7-28 36-28h222q14 0 24.5 8.5t11.5 21.5l28 184q49 16 90 37l142-107q9-9 24-9 13 0 25 10 129 119 165 170 7 8 7 22 0 12-8 23-15 21-51 66.5t-54 70.5q26 50 41 98l183 28q13 2 21 12.5t8 23.5z"/></svg>
+                                <div class="chat-settings-dropdown" bind:this={chatSettinsDropdown}>
+                                    <h4>Inställningar</h4>
+                                    <div class="line"></div>
+                                    <button class="setting-text" on:click={() => updateAChannelName($currentChannel.channel_name, $currentChannel.id, $currentChannel.created_by, currentUser.id)}>Ändra namn</button>
+                                    <div class="line"></div>
+                                    <button class="setting-text" bind:this={addUserSetting} on:click={() => openAddUserModal()}>Lägg till användare</button>
+                                    <div class="line"></div>
+                                    <button class="setting-text" bind:this={removeUserSetting} on:click={() => openRemoveUserModal()}>Ta bort användare</button>
+                                    <div class="line"></div>
+                                    <button class="setting-text warning" bind:this={delChannelSetting} on:click={() => opendelChannelPrompt(`radera chattrummet: ${$currentChannel.channel_name}`)}>Radera detta chattrum</button>
+                                </div>
+                            </div>
                         {/if}
                     </div>
                 </div>
@@ -710,11 +696,11 @@ import { afterUpdate } from 'svelte';
                             placeholder="Send a message"
                             bind:value={messageInputVal}
                             on:keypress={(e) => submitOnEnter(e, messageInputVal, $currentChannel.id)}
-                            on:input={(e) => autoResize(e)}
+                            on:input={(e) => autoResizeChatInput(e)}
                             on:input={(e) => checkInputVal(e)}
                         />
                         <div class="message-buttons">
-                            <button class="send-button disable-text-select"
+                            <button class="send-button noselect"
                             bind:this={sendButton}
                             on:click={(e) => removeFocus(e)}
                             on:click={(e) => submitOnButton(e, messageInputVal, $currentChannel.id)}
@@ -728,7 +714,7 @@ import { afterUpdate } from 'svelte';
                             </button> -->
                         </div>
                         <div class="message-buttons-mobile">
-                            <button class="send-button disable-text-select"
+                            <button tabindex="4" class="send-button noselect"
                             bind:this={sendButtonMobile}
                             on:click={(e) => removeFocus(e)}
                             on:click={(e) => submitOnButton(e, messageInputVal, $currentChannel.id)}
@@ -743,6 +729,12 @@ import { afterUpdate } from 'svelte';
                         </div>
                     </div>
                 </div>
+            {:else}
+                {#if window.innerWidth < 786}
+                    <div class="channels-message-mobile">
+                        <h3>Öppna menyn ovan för att hitta dina chattrum eller skapa ett nytt!</h3>
+                    </div>
+                {/if} 
             {/if}
         </div>
     </div>
