@@ -338,6 +338,7 @@ button:disabled {
 	display: none; 
 	top: 45px;
 	padding-top: 5px;
+	margin-right: 0px;
 	width: 180px;
 }
 .chat-settings-dropdown .setting-text {
@@ -889,5 +890,48 @@ pre {
 	.prompt-modal-content {
 		width: 80%; 
 	}
-		
 }
+
+@media (max-width: 380px) {
+	.chat-settings-dropdown {
+		margin-right: 20px;
+	}
+}
+
+@media (max-width: 370px) {
+	.chat-settings-dropdown {
+		margin-right: 35px;
+	}
+}
+
+@media (max-width: 360px) {
+	.chat-settings-dropdown {
+		margin-right: 50px;
+	}
+}
+
+@media (max-width: 350px) {
+	.chat-settings-dropdown {
+		margin-right: 65px;
+	}
+}
+
+@media (max-width: 340px) {
+	.chat-settings-dropdown {
+		margin-right: 80px;
+	}
+}
+
+@media (max-width: 330px) {
+	.chat-settings-dropdown {
+		margin-right: 95px;
+	}
+}
+
+@media (max-width: 320px) {
+	.chat-settings-dropdown {
+		margin-right: 100px;
+	}
+}
+
+

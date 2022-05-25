@@ -330,7 +330,7 @@ import { afterUpdate } from 'svelte';
 
         // Checking for the window width to determine how many user avatars should be displayed
         if (window.innerWidth < 768) {
-            maxUserAvatars = 3
+            maxUserAvatars = 1
         } else if (window.innerWidth < 900 && window.innerWidth > 768) {
             maxUserAvatars = 5
         } else {
@@ -437,6 +437,10 @@ import { afterUpdate } from 'svelte';
     let sidebar
 
     const toggleSidebar = () => {
+        if (window.innerWidth > 768) {
+            return
+        }
+
         if(sidebar.style.display == "none" || sidebar.style.display == "") {
             navMenuOpenIcon.style.display = "none"
             navMenuCloseIcon.style.display = "block"
@@ -541,7 +545,7 @@ import { afterUpdate } from 'svelte';
         <div class="sidebar-modal">
             <div bind:this={sidebar} class="sidebar">
                 <div class="add-chat-section">
-                    <h3>Chattrums</h3>
+                    <h3>Chattrum</h3>
                     <div tabindex="0" class="plus-icon" on:keypress={(e) => e.keyCode === 13 && createNewChannel()} on:click={() => createNewChannel()}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1600 736v192q0 40-28 68t-68 28h-416v416q0 40-28 68t-68 28h-192q-40 0-68-28t-28-68v-416h-416q-40 0-68-28t-28-68v-192q0-40 28-68t68-28h416v-416q0-40 28-68t68-28h192q40 0 68 28t28 68v416h416q40 0 68 28t28 68z"/></svg>
                     </div>
@@ -551,13 +555,13 @@ import { afterUpdate } from 'svelte';
                         {#each $channels as channel}
                             {#if dbUser && (dbUser.hidden_channels == null || !dbUser.hidden_channels.includes(channel.id))}
                             {#if channel.id == $currentChannel.id}
-                                <div tabindex="0" class="channel activeCurrentChannel" on:keypress={(e) => e.keyCode === 13 && openAChannel(e, channel.id)} on:click={(e) => openAChannel(e, channel.id)}>
+                                <div tabindex="0" class="channel activeCurrentChannel" on:keypress={(e) => e.keyCode === 13 && (openAChannel(e, channel.id), toggleSidebar())} on:click={(e) => (openAChannel(e, channel.id), toggleSidebar())}>
                                     <div class="channel-info">
                                         <p>{truncateString(channel.channel_name, 29)}</p>
                                     </div>
                                 </div>
                             {:else}
-                                <div tabindex="0" class="channel" on:keypress={(e) => e.keyCode === 13 && openAChannel(e, channel.id)} on:click={(e) => openAChannel(e, channel.id)}>
+                                <div tabindex="0" class="channel" on:keypress={(e) => e.keyCode === 13 && (openAChannel(e, channel.id), toggleSidebar())} on:click={(e) => (openAChannel(e, channel.id), toggleSidebar())}>
                                     <div class="channel-info">
                                         <p>{truncateString(channel.channel_name, 29)}</p>
                                     </div>
