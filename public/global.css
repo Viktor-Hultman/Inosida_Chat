@@ -151,6 +151,8 @@ button:disabled {
 }
 
 .plus-icon {
+	max-width: 20px;
+	min-width: 20px;
 	width: 20px;
 	height: 20px;
 	padding: 10px;
@@ -226,6 +228,7 @@ button:disabled {
 	align-items: center;
 	justify-content: center;
 	min-width: 20px;
+	max-width: 20px;
 	height: 20px;
 	color: inherit;
 	padding: 10px;
@@ -629,6 +632,7 @@ button:disabled {
 }
 
 .message-popups .popup {
+	max-width: 20px;
 	min-width: 20px;
 	height: 20px;
 	display: flex;
@@ -672,6 +676,7 @@ button:disabled {
 	margin: 5px 0px;
 }
 .format-icon {
+	min-width: 24px;
 	min-width: 24px;
 	height: 24px;
 	display: flex;
