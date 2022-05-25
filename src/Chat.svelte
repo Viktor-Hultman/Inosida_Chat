@@ -379,6 +379,12 @@ import { afterUpdate } from 'svelte';
     let delChannelText
     let delChannelSetting
 
+    let delMessagePrompt
+    let delMessageText
+    let inputContainer
+    let messageId = null
+    let messageUserID = null
+
     const opendelChannelPrompt = (text) => {
         delChannelText = text
         delChannelPrompt.style.display = "block"
@@ -396,6 +402,25 @@ import { afterUpdate } from 'svelte';
         chatSettinsDropdown.style.display = "none"
         $currentChannel = false
         delChannelSetting.focus()
+    }
+
+    const opendelMessagePrompt = (text) => {
+        delMessageText = text
+        delMessagePrompt.style.display = "block"
+        delMessagePrompt.focus()
+    }
+    const closeDelMessagePrompt = (e) => {
+        if (e.target.className.includes("modal-background")){
+            delMessagePrompt.style.display = "none"
+            inputContainer.focus()
+        }
+    }
+    const yesDeleteMessage = () => {
+        deleteMessage(messageId, messageUserID, currentUser.id)
+        messageId = null
+        messageUserID = null
+        delMessagePrompt.style.display = "none"
+        inputContainer.focus()
     }
 
     const showMessageSettings = (e) => {
@@ -484,13 +509,22 @@ import { afterUpdate } from 'svelte';
     </div>
     <div class="modal-background" tabindex="-1" bind:this={delChannelPrompt} on:click={(e) => closeDelChannelPrompt(e)}>
         <div class="prompt-modal-content">
-            <h3>Är du säker på att du vill {delChannelText} ?</h3>
+            <h3>Är du säker på att du vill {delChannelText}?</h3>
             <div class="buttons">
                 <button class="yes-button button" on:click={() => yesDeleteChannel()}>JA</button>
                 <button class="no-button button" on:click={() => (delChannelPrompt.style.display = "none", delChannelSetting.focus())}>NEJ</button>
             </div>
         </div>
     </div>
+    <div class="modal-background" tabindex="-1" bind:this={delMessagePrompt} on:click={(e) => closeDelMessagePrompt(e)}>
+        <div class="prompt-modal-content">
+            <h3>Är du säker på att du vill {delMessageText}?</h3>
+            <div class="buttons">
+                <button class="yes-button button" on:click={() => yesDeleteMessage()}>JA</button>
+                <button class="no-button button" on:click={() => (delMessagePrompt.style.display = "none", inputContainer.focus())}>NEJ</button>
+            </div>
+        </div>
+    </div> 
     <nav class="navbar">
         <div class="nav-items">
             <div tabindex="0" class="nav-item" on:keypress={(e) => e.keyCode === 13 && toggleSidebar()} on:click={() => toggleSidebar()}>
@@ -568,12 +602,13 @@ import { afterUpdate } from 'svelte';
                             on:click={(e) => toggleUsersDropdown()}
                         >
                             <div class="user-avatars">
-                                <img class="chat-avatar" src="{currentUser.user_metadata.avatar_url}" alt="channel user avatar">
                                 {#each $allUsers as user, i}
                                     {#if $currentChannel.allowed_users != null && $currentChannel.allowed_users.includes(user.id) && $currentChannel.created_by != user.id}
                                         {#if i < maxUserAvatars}
                                             <img class="chat-avatar" src="{user.userdata.avatar_url}" alt="channel user avatar">
                                         {/if}
+                                    {:else if $currentChannel.created_by == user.id}
+                                        <img class="chat-avatar" src="{user.userdata.avatar_url}" alt="channel user avatar">
                                     {/if}
                                 {/each}
                             </div>
@@ -644,7 +679,7 @@ import { afterUpdate } from 'svelte';
                                     <div class="popup edit-pen" on:click={() => updateAMessage(message.message, message.id, message.user_id.id, currentUser.id)}>
                                         <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M491 1536l91-91-235-235-91 91v107h128v128h107zm523-928q0-22-22-22-10 0-17 7l-542 542q-7 7-7 17 0 22 22 22 10 0 17-7l542-542q7-7 7-17zm-54-192l416 416-832 832h-416v-416zm683 96q0 53-37 90l-166 166-416-416 166-165q36-38 90-38 53 0 91 38l235 234q37 39 37 91z"/></svg>
                                     </div>
-                                    <div class="popup trashcan" on:click={() => deleteMessage(message.id, message.user_id.id, currentUser.id)}>
+                                    <div class="popup trashcan" on:click={() => (opendelMessagePrompt("radera ditt meddelande"), messageId = message.id, messageUserID = message.user_id.id)}>
                                         <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 1792 1792"><path d="M704 1376v-704q0-14-9-23t-23-9h-64q-14 0-23 9t-9 23v704q0 14 9 23t23 9h64q14 0 23-9t9-23zm256 0v-704q0-14-9-23t-23-9h-64q-14 0-23 9t-9 23v704q0 14 9 23t23 9h64q14 0 23-9t9-23zm256 0v-704q0-14-9-23t-23-9h-64q-14 0-23 9t-9 23v704q0 14 9 23t23 9h64q14 0 23-9t9-23zm-544-992h448l-48-117q-7-9-17-11h-317q-10 2-17 11zm928 32v64q0 14-9 23t-23 9h-96v948q0 83-47 143.5t-113 60.5h-832q-66 0-113-58.5t-47-141.5v-952h-96q-14 0-23-9t-9-23v-64q0-14 9-23t23-9h309l70-167q15-37 54-63t79-26h320q40 0 79 26t54 63l70 167h309q14 0 23 9t9 23z"/></svg>
                                     </div>
                                 </div>
@@ -690,7 +725,7 @@ import { afterUpdate } from 'svelte';
                             <!-- <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 1792 1792"><path d="M1520 1216q0-40-28-68l-208-208q-28-28-68-28-42 0-72 32 3 3 19 18.5t21.5 21.5 15 19 13 25.5 3.5 27.5q0 40-28 68t-68 28q-15 0-27.5-3.5t-25.5-13-19-15-21.5-21.5-18.5-19q-33 31-33 73 0 40 28 68l206 207q27 27 68 27 40 0 68-26l147-146q28-28 28-67zm-703-705q0-40-28-68l-206-207q-28-28-68-28-39 0-68 27l-147 146q-28 28-28 67 0 40 28 68l208 208q27 27 68 27 42 0 72-31-3-3-19-18.5t-21.5-21.5-15-19-13-25.5-3.5-27.5q0-40 28-68t68-28q15 0 27.5 3.5t25.5 13 19 15 21.5 21.5 18.5 19q33-31 33-73zm895 705q0 120-85 203l-147 146q-83 83-203 83-121 0-204-85l-206-207q-83-83-83-203 0-123 88-209l-88-88q-86 88-208 88-120 0-204-84l-208-208q-84-84-84-204t85-203l147-146q83-83 203-83 121 0 204 85l206 207q83 83 83 203 0 123-88 209l88 88q86-88 208-88 120 0 204 84l208 208q84 84 84 204z"/></svg> -->
                         </div>
                     </div>
-                    <div class="input-and-buttons">
+                    <div class="input-and-buttons" tabindex="-1" bind:this={inputContainer}>
                         <textarea class="message-input-field"
                             name="message"
                             placeholder="Send a message"
@@ -714,7 +749,7 @@ import { afterUpdate } from 'svelte';
                             </button> -->
                         </div>
                         <div class="message-buttons-mobile">
-                            <button tabindex="4" class="send-button noselect"
+                            <button class="send-button noselect"
                             bind:this={sendButtonMobile}
                             on:click={(e) => removeFocus(e)}
                             on:click={(e) => submitOnButton(e, messageInputVal, $currentChannel.id)}
