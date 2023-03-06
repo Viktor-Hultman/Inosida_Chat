@@ -2,8 +2,6 @@
 
 Inosida_Chat is an internal chat service that I am currently creating for [Inosida Webbyrå](https://inosida.se/). This project is produced as my thesis at [KYH](https://kyh.se/).
 
-Here you can find the demo version for this project: [Demo](https://inosida-chat.surge.sh/)
-
 ## Description
 
 This project was made as an internal service for [Inosida Webbyrå](https://inosida.se/).
